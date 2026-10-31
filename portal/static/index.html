@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache Controller Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Direct-Mapped Cache Controller <span class="sub">simulation portal</span></h1>
+  <div class="note">Every waveform here is read from a VCD written by Icarus Verilog for the run shown. Nothing is generated in the browser.</div>
+</header>
+
+<main>
+  <aside id="side">
+    <section class="card">
+      <h2>Run a simulation</h2>
+      <label for="scenario">Test scenario</label>
+      <select id="scenario"></select>
+      <p id="scenarioDesc" class="muted"></p>
+      <label for="latency">Memory latency (cycles)</label>
+      <select id="latency"></select>
+      <button id="runBtn" class="primary">Compile &amp; run</button>
+      <div id="status" class="status" role="status"></div>
+    </section>
+    <section class="card">
+      <h2>Previous runs</h2>
+      <select id="runs" size="6"></select>
+    </section>
+    <section class="card" id="resultCard" hidden>
+      <h2>Results</h2>
+      <div id="results"></div>
+    </section>
+  </aside>
+
+  <section id="content">
+    <div id="banner" class="banner empty">No run loaded. Choose a scenario and press “Compile &amp; run”.</div>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <button id="zin" title="Zoom in (+)">＋</button>
+      <button id="zout" title="Zoom out (−)">－</button>
+      <button id="zfit" title="Show whole simulation">Fit</button>
+      <button id="pleft" title="Pan left">◀</button>
+      <button id="pright" title="Pan right">▶</button>
+      <button id="gocur" title="Center view on cursor">To cursor</button>
+      <label>Radix
+        <select id="radix"><option value="hex">hex</option><option value="bin">binary</option><option value="dec">decimal</option></select>
+      </label>
+      <details id="sigPicker"><summary>Signals</summary><div id="sigList"></div></details>
+      <span id="cursorReadout" class="muted"></span>
+      <a id="dlVcd" class="btn" href="#" download>Download VCD</a>
+      <button id="copyCmd" title="Copy a command that opens the VCD in GTKWave">Copy GTKWave command</button>
+    </div>
+
+    <div id="wavebox" hidden>
+      <div id="names"></div>
+      <div id="canvasWrap"><canvas id="wave"></canvas></div>
+    </div>
+    <input id="scroll" type="range" min="0" max="1000" value="0" hidden aria-label="Horizontal position">
+    <div id="loading" class="muted" hidden>Loading waveform from VCD…</div>
+
+    <div id="lower" hidden>
+      <section class="card" id="fsmCard">
+        <h2>Controller FSM <span class="muted" id="fsmTime"></span></h2>
+        <svg id="fsm" viewBox="0 0 640 230" role="img" aria-label="Controller FSM with current state highlighted"></svg>
+        <div id="fsmInfo" class="kv"></div>
+      </section>
+      <section class="card" id="cacheCard">
+        <h2>Cache lines <span class="muted" id="cacheTime"></span></h2>
+        <div class="muted" id="cacheNote">Rebuilt from the dumped refill/reset signals at the cursor time.</div>
+        <div id="cacheTable"></div>
+      </section>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

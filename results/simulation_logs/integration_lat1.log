@@ -1,0 +1,18 @@
+VCD info: dumpfile results/waveforms/phase4_lat1.vcd opened for output.
+--- LATENCY=1 ---
+ok   addr=00000000 data=4fa8015a MISS lat=8
+ok   addr=00000000 data=4fa8015a HIT  lat=2
+ok   addr=00000004 data=eb449df6 HIT  lat=2
+ok   addr=00000008 data=87e03992 HIT  lat=2
+ok   addr=0000000c data=237cd52e HIT  lat=2
+ok   addr=00000400 data=83dc358e MISS lat=8
+ok   addr=00000000 data=4fa8015a MISS lat=8
+ok   addr=00000400 data=83dc358e MISS lat=8
+ok   addr=00000010 data=bf1871ca MISS lat=8
+ok   addr=00000400 data=83dc358e HIT  lat=2
+ok   addr=00000010 data=bf1871ca HIT  lat=2
+ok   addr=00000002 ERR (as expected) lat=1
+ok   addr=00010000 ERR (as expected) lat=1
+stats: req=13 hit=6 miss=5 memrd=5 done=13 cycles=70 memwait=25
+tb_integration LAT=1: PASS
+sim/tb_integration.v:98: $finish called at 730000 (1ps)

@@ -1,0 +1,30 @@
+
+10. Printing statistics.
+
+=== cache_controller ===
+
+        +----------Local Count, excluding submodules.
+        | 
+    16602 wires
+    27770 wire bits
+     1199 public wires
+    11788 public wire bits
+       24 ports
+      495 port bits
+    26160 cells
+      155   $_ANDNOT_
+     2165   $_AND_
+     9750   $_DFFE_PP_
+        9   $_DFF_P_
+     7102   $_MUX_
+     2904   $_NAND_
+      373   $_NOR_
+       21   $_NOT_
+     1810   $_ORNOT_
+     1163   $_OR_
+      445   $_SDFFE_PN0P_
+       33   $_SDFF_PN0_
+       12   $_XNOR_
+      212   $_XOR_
+        6   $scopeinfo
+

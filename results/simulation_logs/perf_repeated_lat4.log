@@ -1,0 +1,4 @@
+WARNING: sim/tb_perf.v:75: $readmemh(sim/test_vectors/repeated.hex): Not enough words in the file for the requested range [0:65535].
+PERF workload=repeated lat=4 n=2000 hits=1996 misses=4 mem_reads=4 completed=2000 cycles=6039 mem_wait=32 hit_lat_sum=3992 miss_lat_sum=44 data_errors=0
+PERF_OK
+sim/tb_perf.v:99: $finish called at 60420000 (1ps)

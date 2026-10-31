@@ -1,0 +1,4 @@
+.venv/
+*.vvp
+__pycache__/
+results/portal_runs/

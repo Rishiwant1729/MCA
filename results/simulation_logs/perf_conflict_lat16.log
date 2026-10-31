@@ -1,0 +1,4 @@
+WARNING: sim/tb_perf.v:75: $readmemh(sim/test_vectors/conflict.hex): Not enough words in the file for the requested range [0:65535].
+PERF workload=conflict lat=16 n=2000 hits=0 misses=2000 mem_reads=2000 completed=2000 cycles=48004 mem_wait=40000 hit_lat_sum=0 miss_lat_sum=46000 data_errors=0
+PERF_OK
+sim/tb_perf.v:99: $finish called at 480070000 (1ps)

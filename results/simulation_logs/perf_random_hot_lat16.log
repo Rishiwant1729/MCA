@@ -1,0 +1,4 @@
+WARNING: sim/tb_perf.v:75: $readmemh(sim/test_vectors/random_hot.hex): Not enough words in the file for the requested range [0:65535].
+PERF workload=random_hot lat=16 n=4000 hits=2805 misses=1195 mem_reads=1195 completed=4000 cycles=37098 mem_wait=23900 hit_lat_sum=5610 miss_lat_sum=27485 data_errors=0
+PERF_OK
+sim/tb_perf.v:99: $finish called at 371010000 (1ps)
