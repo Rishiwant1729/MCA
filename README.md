@@ -42,11 +42,12 @@ Five pages (Simulation, Cache Viewer, Waveform, Access Trace, Learn) share one s
 and inspect the real results, FSM path, cache lines, access trace and VCD waveform; **Download VCD** opens in GTKWave.
 Details, how each number is obtained, safety model and troubleshooting: [docs/portal.md](docs/portal.md).
 
-## IEEE-style report
-`report/Direct_Mapped_Cache_Controller_IEEE_Report.pdf` (source: `report/main.tex`, IEEEtran class). It explains the theory and every formula, and includes
-the block/FSM/flow diagrams, ten waveform figures drawn from real simulation runs, portal screenshots, performance and synthesis tables. `make report`
-regenerates the waveform figures and the PDF (requires `pdflatex`; install the IEEE class with `tlmgr --usermode install ieeetran preprint multirow`).
-The portal screenshots in `report/figures/` were captured from the running portal with headless Chrome. Set the author name in `report/main.tex`.
+## IEEE report
+`report/Direct_Mapped_Cache_Controller_IEEE_Report.pdf` (source `report/main.tex`, IEEEtran class) is the single project report: Abstract, Introduction,
+Literature Review, Proposed Solution (with diagrams), Implementation and Verification, Results (waveforms, performance, synthesis, portal screenshots),
+Individual Contributions, Conclusion and References. `make report` regenerates the waveform figures from real runs and rebuilds the PDF
+(needs `pdflatex`; install the class with `tlmgr --usermode install ieeetran`). Fill in the team names on the title page and in the
+Individual Contributions table of `report/main.tex`.
 
 ## Layout
 ```
@@ -55,13 +56,14 @@ sim/        simulation only: main_memory_model, reference_memory, tb_cache_contr
 portal/     server.py (local backend), vcd_index.py (VCD reader + access trace), static/ (five-page browser UI)
 scripts/    run_simulation.sh, run_synthesis.sh, analyze_results.py, plot_waveform.py, verify_portal.py
 results/    simulation_logs/, waveforms/, performance/, synthesis/   (generated)
-docs/       portal.md, architecture.md, fsm_design.md, verification_plan.md, performance_report.md, synthesis_report.md, technical_report.md, diagrams/
+docs/       architecture.md, fsm_design.md, portal.md, diagrams/   (design notes)
+report/     the IEEE report: main.tex and Direct_Mapped_Cache_Controller_IEEE_Report.pdf
 ```
 
 ## Key results (all measured; see the docs for details)
-- 11 directed/random tests pass at every latency tested; bug-injection check: 12 of 13 injected RTL bugs caught, the 13th is behaviorally equivalent (`docs/verification_plan.md`).
-- Hit time 2 cycles; miss penalty LAT + 5 cycles. At LAT = 4: sequential 75% hit, repeated 99.8%, random 1.4%, conflict 0% (`docs/performance_report.md`).
-- FPGA-style synthesis estimate: 635 LUT4, 487 flip-flops, 18 block RAMs (`docs/synthesis_report.md`). No timing analysis.
+- 11 directed/random tests pass at every latency tested; bug-injection check: 12 of 13 injected RTL bugs caught, the 13th is behaviorally equivalent (IEEE report, Section IV).
+- Hit time 2 cycles; miss penalty LAT + 5 cycles. At LAT = 4: sequential 75% hit, repeated 99.8%, random 1.4%, conflict 0% (IEEE report, Section V).
+- FPGA-style synthesis estimate: 635 LUT4, 487 flip-flops, 18 block RAMs (IEEE report, Section V). No timing analysis.
 
 ## Demonstration procedure (about 5 minutes)
 1. `make smoke` — shows the toolchain works.

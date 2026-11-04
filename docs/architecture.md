@@ -67,4 +67,4 @@ response pulse.
 
 ## Timing (measured)
 Hit = 2 cycles (accept edge → LOOKUP → COMPLETE, counted to the edge where `resp_valid` is sampled). Miss = LAT + 7.
-Miss penalty = LAT + 5. Memory-wait cycles per miss = LAT + 4. See `performance_report.md` for the AMAT convention.
+Miss penalty = LAT + 5. Memory-wait cycles per miss = LAT + 4. See the IEEE report in `report/` for the AMAT convention.
