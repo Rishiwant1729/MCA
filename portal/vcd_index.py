@@ -222,3 +222,107 @@ class VcdIndex:
                 n += 1
             prev = v
         return n
+
+
+# ---------------------------------------------------------------------------- access trace from the VCD
+def build_accesses(idx, state_names, index_w=6, offset_w=4):
+    """Reconstruct every CPU access from signals in the VCD (nothing is simulated or invented here).
+
+    An access is *accepted* on a rising clock edge where req_valid and req_ready were both 1 just before the edge
+    (and rst_n was 1). Its response is the next rising edge where resp_valid was 1 just before the edge; hit/miss comes
+    from resp_hit, errors from resp_err. The FSM path is read from dut.state at the edges in between.
+    """
+    T = "tb_cache_controller."
+    need = [T + n for n in ("clk", "rst_n", "req_valid", "req_ready", "req_addr", "resp_valid", "resp_hit", "resp_err",
+                            "resp_rdata", "dut.state", "mreq_v", "mreq_r", "drv_we")]
+    if any(n not in idx.sig for n in need):
+        return None
+    clk = idx.sig[T + "clk"]
+    rises, prev = [], 0
+    for t, v in zip(clk["times"], clk["vals"]):
+        if v == 1 and prev != 1:
+            rises.append(t)
+        prev = v
+    pre = lambda name, t: idx.value_at(T + name, t - 1)          # value just before the edge at time t
+    events = [e for e in idx.events if e[1] == "write"]
+    ev_times = [e[0] for e in events]
+
+    accepts, resets = [], 0
+    was_reset = False
+    mem_tx = 0
+    for k, t in enumerate(rises):
+        rst = pre("rst_n", t)
+        if rst == 0:
+            if not was_reset:
+                resets += 1
+            was_reset = True
+            continue
+        was_reset = False
+        if pre("mreq_v", t) == 1 and pre("mreq_r", t) == 1:
+            mem_tx += 1
+        if pre("req_valid", t) == 1 and pre("req_ready", t) == 1:
+            accepts.append(k)
+
+    out = []
+    for n, k in enumerate(accepts, 1):
+        t = rises[k]
+        addr = pre("req_addr", t)
+        we = pre("drv_we", t)
+        nxt = accepts[n] if n < len(accepts) else len(rises)
+        r = None
+        aborted = False
+        for j in range(k + 1, min(len(rises), k + 4000)):
+            tj = rises[j]
+            if pre("rst_n", tj) == 0:
+                aborted = True
+                break
+            if pre("resp_valid", tj) == 1:
+                r = j
+                break
+            if j >= nxt:                      # a new request was accepted before this one answered: lost response
+                break
+        row = dict(n=n, cycle=k, accept_t=t, addr=None if addr == UNKNOWN else addr)
+        if addr != UNKNOWN:
+            row["tag"] = addr >> (index_w + offset_w)
+            row["index"] = (addr >> offset_w) & ((1 << index_w) - 1)
+            row["offset"] = addr & ((1 << offset_w) - 1)
+        row["write"] = we == 1
+        if r is None:
+            row.update(result="aborted" if aborted else "incomplete", resp_t=None, resp_cycle=None, latency=None,
+                       transition="(reset before response)" if aborted else "(no response in trace)", states=[])
+        else:
+            tr = rises[r]
+            err = pre("resp_err", tr) == 1
+            hit = pre("resp_hit", tr) == 1
+            states, last = [], None
+            for j in range(k + 1, r + 1):
+                s = pre("dut.state", rises[j])
+                if s != last and s != UNKNOWN:
+                    states.append(state_names[s] if 0 <= s < len(state_names) else f"S{s}")
+                    last = s
+            rd = pre("resp_rdata", tr)
+            res = "error" if err else ("hit" if hit else "miss")
+            row.update(result=res, resp_t=tr, resp_cycle=r, latency=r - k,
+                       rdata=None if rd == UNKNOWN else rd, states=states,
+                       transition=(" → ".join(states[:2]) if len(states) >= 2 else " → ".join(states)))
+            if res == "miss":
+                lo = bisect.bisect_left(ev_times, t)
+                hi = bisect.bisect_right(ev_times, tr)
+                row["refill_t"] = ev_times[lo] if lo < hi else None
+        out.append(row)
+
+    ok = [a for a in out if a["result"] in ("hit", "miss")]
+    hits = [a for a in ok if a["result"] == "hit"]
+    miss = [a for a in ok if a["result"] == "miss"]
+    summary = dict(
+        total=len(out), hits=len(hits), misses=len(miss), errors=sum(a["result"] == "error" for a in out),
+        aborted=sum(a["result"] in ("aborted", "incomplete") for a in out), resets=resets,
+        mem_transactions=mem_tx, cycles=len(rises), clock_edges=len(rises),
+        hit_rate=(len(hits) / len(ok)) if ok else None, miss_rate=(len(miss) / len(ok)) if ok else None,
+        avg_latency=(sum(a["latency"] for a in ok) / len(ok)) if ok else None,
+        hit_time=(sum(a["latency"] for a in hits) / len(hits)) if hits else None,
+        miss_latency=(sum(a["latency"] for a in miss) / len(miss)) if miss else None)
+    if summary["hit_time"] is not None and summary["miss_latency"] is not None:
+        summary["miss_penalty"] = summary["miss_latency"] - summary["hit_time"]
+        summary["amat_model"] = summary["hit_time"] + summary["miss_rate"] * summary["miss_penalty"]
+    return dict(accesses=out, summary=summary)

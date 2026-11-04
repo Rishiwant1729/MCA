@@ -33,10 +33,14 @@ Tested with Icarus Verilog 13.0, Yosys 0.70, Python 3.14, matplotlib 3.11.
 
 View a waveform: `open -a gtkwave results/waveforms/tb_cache_lat4.vcd` (the `test_no` signal shows which test is running).
 
-## Web portal with waveform viewer
-`make portal`, then open <http://127.0.0.1:8765/>. Choose a test scenario, run the real Icarus Verilog simulation, and inspect the VCD
-it wrote: zoom, pan, move a cursor, pick signals, collapse groups, hex/binary buses, an FSM diagram and a cache-line table that follow the
-cursor, plus *Download VCD* for GTKWave. Details, safety model and macOS troubleshooting: [docs/portal.md](docs/portal.md).
+## Web portal
+```bash
+make portal
+```
+Opens <http://127.0.0.1:8765/> (leave the Terminal window open; Ctrl-C stops it; or double-click `Start Portal.command`).
+Five pages (Simulation, Cache Viewer, Waveform, Access Trace, Learn) share one selected run. Pick a scenario, press **Run Simulation**,
+and inspect the real results, FSM path, cache lines, access trace and VCD waveform; **Download VCD** opens in GTKWave.
+Details, how each number is obtained, safety model and troubleshooting: [docs/portal.md](docs/portal.md).
 
 ## IEEE-style report
 `report/Direct_Mapped_Cache_Controller_IEEE_Report.pdf` (source: `report/main.tex`, IEEEtran class). It explains the theory and every formula, and includes
@@ -48,7 +52,7 @@ The portal screenshots in `report/figures/` were captured from the running porta
 ```
 rtl/        synthesizable design (address_decoder, cache_data/tag/valid_ram, main_memory_interface, cache_controller)
 sim/        simulation only: main_memory_model, reference_memory, tb_cache_controller, tb_perf, tb_integration, unit/, test_vectors/
-portal/     server.py (local backend), vcd_index.py (VCD reader), static/ (browser viewer)
+portal/     server.py (local backend), vcd_index.py (VCD reader + access trace), static/ (five-page browser UI)
 scripts/    run_simulation.sh, run_synthesis.sh, analyze_results.py, plot_waveform.py, verify_portal.py
 results/    simulation_logs/, waveforms/, performance/, synthesis/   (generated)
 docs/       portal.md, architecture.md, fsm_design.md, verification_plan.md, performance_report.md, synthesis_report.md, technical_report.md, diagrams/

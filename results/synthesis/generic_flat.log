@@ -3058,13 +3058,7 @@ Removing temp directory.
 8.24.25. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[43][0][0]$y$2518
 
-8.24.26. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[42][0][0]$y$2514
-
-8.24.27. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[41][0][0]$y$2510
-
-8.24.27.1. Executed ABC.
+8.24.25.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3085,13 +3079,19 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.27.2. Re-integrating ABC results.
+8.24.25.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
+
+8.24.26. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[42][0][0]$y$2514
+
+8.24.27. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[41][0][0]$y$2510
 
 8.24.27.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
@@ -3125,7 +3125,10 @@ Removing temp directory.
 8.24.28. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[40][0][0]$y$2506
 
-8.24.28.1. Executed ABC.
+8.24.29. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[39][0][0]$y$2502
+
+8.24.29.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3146,7 +3149,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.28.2. Re-integrating ABC results.
+8.24.29.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
@@ -3154,7 +3157,7 @@ ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
 
-8.24.28.1. Executed ABC.
+8.24.29.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3175,16 +3178,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.28.2. Re-integrating ABC results.
+8.24.29.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:       14
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:       32
 ABC RESULTS:          output signals:       15
 Removing temp directory.
-
-8.24.29. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[39][0][0]$y$2502
 
 8.24.29.1. Executed ABC.
 Extracted 139 gates and 417 wires to a netlist network with 278 inputs and 138 outputs.
@@ -3282,40 +3282,11 @@ Removing temp directory.
 8.24.32. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[36][0][0]$y$2490
 
-8.24.32.1. Executed ABC.
-Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
-Running ABC script: <abc-temp-dir>/abc.script
-ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
-ABC: + read_blif <abc-temp-dir>/input.blif 
-ABC: + read_library <abc-temp-dir>/stdcells.genlib 
-ABC: + strash 
-ABC: + &get -n 
-ABC: + &fraig -x 
-ABC: + &put 
-ABC: + scorr 
-ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
-ABC: + dc2 
-ABC: + dretime 
-ABC: + strash 
-ABC: + &get -n 
-ABC: + &dch -f 
-ABC: + &nf 
-ABC: + &put 
-ABC: + write_blif <abc-temp-dir>/output.blif 
-
-8.24.32.2. Re-integrating ABC results.
-ABC RESULTS:               AND cells:        2
-ABC RESULTS:               MUX cells:       14
-ABC RESULTS:        internal signals:        1
-ABC RESULTS:           input signals:       32
-ABC RESULTS:          output signals:       15
-Removing temp directory.
-
 8.24.33. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[35][0][0]$y$2486
 
 8.24.33.1. Executed ABC.
-Extracted 139 gates and 417 wires to a netlist network with 278 inputs and 138 outputs.
+Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
 ABC: + read_blif <abc-temp-dir>/input.blif 
@@ -3337,14 +3308,43 @@ ABC: + write_blif <abc-temp-dir>/output.blif
 
 8.24.33.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
+ABC RESULTS:               MUX cells:       14
+ABC RESULTS:        internal signals:        1
+ABC RESULTS:           input signals:       32
+ABC RESULTS:          output signals:       15
+Removing temp directory.
+
+8.24.34. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[34][0][0]$y$2482
+
+8.24.34.1. Executed ABC.
+Extracted 139 gates and 417 wires to a netlist network with 278 inputs and 138 outputs.
+Running ABC script: <abc-temp-dir>/abc.script
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_blif <abc-temp-dir>/input.blif 
+ABC: + read_library <abc-temp-dir>/stdcells.genlib 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &fraig -x 
+ABC: + &put 
+ABC: + scorr 
+ABC: Warning: The network is combinational (run "fraig" or "fraig_sweep").
+ABC: + dc2 
+ABC: + dretime 
+ABC: + strash 
+ABC: + &get -n 
+ABC: + &dch -f 
+ABC: + &nf 
+ABC: + &put 
+ABC: + write_blif <abc-temp-dir>/output.blif 
+
+8.24.34.2. Re-integrating ABC results.
+ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      137
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      278
 ABC RESULTS:          output signals:      138
 Removing temp directory.
-
-8.24.34. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[34][0][0]$y$2482
 
 8.24.34.1. Executed ABC.
 Extracted 16 gates and 47 wires to a netlist network with 31 inputs and 15 outputs.
@@ -3378,13 +3378,7 @@ Removing temp directory.
 8.24.35. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[33][0][0]$y$2478
 
-8.24.36. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[32][0][0]$y$2474
-
-8.24.37. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[31][0][0]$y$2470
-
-8.24.37.1. Executed ABC.
+8.24.35.1. Executed ABC.
 Extracted 139 gates and 417 wires to a netlist network with 278 inputs and 138 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3405,7 +3399,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.37.2. Re-integrating ABC results.
+8.24.35.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      137
 ABC RESULTS:        internal signals:        1
@@ -3413,7 +3407,10 @@ ABC RESULTS:           input signals:      278
 ABC RESULTS:          output signals:      138
 Removing temp directory.
 
-8.24.37.1. Executed ABC.
+8.24.36. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[32][0][0]$y$2474
+
+8.24.36.1. Executed ABC.
 Extracted 15 gates and 45 wires to a netlist network with 30 inputs and 14 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3434,13 +3431,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.37.2. Re-integrating ABC results.
+8.24.36.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:       13
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:       30
 ABC RESULTS:          output signals:       14
 Removing temp directory.
+
+8.24.37. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[31][0][0]$y$2470
 
 8.24.37.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
@@ -3570,10 +3570,7 @@ Removing temp directory.
 8.24.41. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[27][0][0]$y$2454
 
-8.24.42. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[26][0][0]$y$2450
-
-8.24.42.1. Executed ABC.
+8.24.41.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3594,7 +3591,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.42.2. Re-integrating ABC results.
+8.24.41.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
@@ -3602,7 +3599,13 @@ ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
 
-8.24.42.1. Executed ABC.
+8.24.42. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[26][0][0]$y$2450
+
+8.24.43. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[25][0][0]$y$2446
+
+8.24.43.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3623,16 +3626,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.42.2. Re-integrating ABC results.
+8.24.43.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:       14
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:       32
 ABC RESULTS:          output signals:       15
 Removing temp directory.
-
-8.24.43. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[25][0][0]$y$2446
 
 8.24.43.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
@@ -3698,7 +3698,10 @@ Removing temp directory.
 8.24.45. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[23][0][0]$y$2438
 
-8.24.45.1. Executed ABC.
+8.24.46. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[22][0][0]$y$2434
+
+8.24.46.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3719,16 +3722,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.45.2. Re-integrating ABC results.
+8.24.46.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
-
-8.24.46. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[22][0][0]$y$2434
 
 8.24.46.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
@@ -3954,10 +3954,7 @@ Removing temp directory.
 8.24.53. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[15][0][0]$y$2406
 
-8.24.54. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[14][0][0]$y$2402
-
-8.24.54.1. Executed ABC.
+8.24.53.1. Executed ABC.
 Extracted 139 gates and 417 wires to a netlist network with 278 inputs and 138 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -3978,13 +3975,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.54.2. Re-integrating ABC results.
+8.24.53.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      137
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      278
 ABC RESULTS:          output signals:      138
 Removing temp directory.
+
+8.24.54. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[14][0][0]$y$2402
 
 8.24.54.1. Executed ABC.
 Extracted 15 gates and 45 wires to a netlist network with 30 inputs and 14 outputs.
@@ -4018,10 +4018,7 @@ Removing temp directory.
 8.24.55. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[13][0][0]$y$2398
 
-8.24.56. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[12][0][0]$y$2394
-
-8.24.56.1. Executed ABC.
+8.24.55.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4042,7 +4039,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.56.2. Re-integrating ABC results.
+8.24.55.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
@@ -4050,7 +4047,13 @@ ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
 
-8.24.56.1. Executed ABC.
+8.24.56. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[12][0][0]$y$2394
+
+8.24.57. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[11][0][0]$y$2390
+
+8.24.57.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4071,16 +4074,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.56.2. Re-integrating ABC results.
+8.24.57.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:       14
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:       32
 ABC RESULTS:          output signals:       15
 Removing temp directory.
-
-8.24.57. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[11][0][0]$y$2390
 
 8.24.57.1. Executed ABC.
 Extracted 117 gates and 351 wires to a netlist network with 234 inputs and 116 outputs.
@@ -4178,10 +4178,7 @@ Removing temp directory.
 8.24.60. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[8][0][0]$y$2378
 
-8.24.61. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[7][0][0]$y$2374
-
-8.24.61.1. Executed ABC.
+8.24.60.1. Executed ABC.
 Extracted 15 gates and 45 wires to a netlist network with 30 inputs and 14 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4202,13 +4199,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.61.2. Re-integrating ABC results.
+8.24.60.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:       13
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:       30
 ABC RESULTS:          output signals:       14
 Removing temp directory.
+
+8.24.61. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[7][0][0]$y$2374
 
 8.24.61.1. Executed ABC.
 Extracted 140 gates and 420 wires to a netlist network with 280 inputs and 139 outputs.
@@ -4274,7 +4274,10 @@ Removing temp directory.
 8.24.63. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[5][0][0]$y$2366
 
-8.24.63.1. Executed ABC.
+8.24.64. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[4][0][0]$y$2362
+
+8.24.64.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4295,16 +4298,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.63.2. Re-integrating ABC results.
+8.24.64.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
-
-8.24.64. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[4][0][0]$y$2362
 
 8.24.64.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
@@ -4338,10 +4338,7 @@ Removing temp directory.
 8.24.65. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[3][0][0]$y$2358
 
-8.24.66. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[2][0][0]$y$2354
-
-8.24.66.1. Executed ABC.
+8.24.65.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4362,13 +4359,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.66.2. Re-integrating ABC results.
+8.24.65.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
+
+8.24.66. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by $memory\u_data.lane[0].mem$wren[2][0][0]$y$2354
 
 8.24.66.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
@@ -4466,7 +4466,10 @@ Removing temp directory.
 8.24.69. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $auto$simple.cc:210:make_patterns_logic$988, synchronously reset by !\rst_n
 
-8.24.69.1. Executed ABC.
+8.24.70. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by \state [1], synchronously reset by !\rst_n
+
+8.24.70.1. Executed ABC.
 Extracted 138 gates and 414 wires to a netlist network with 276 inputs and 137 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4487,16 +4490,13 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.69.2. Re-integrating ABC results.
+8.24.70.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      136
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      276
 ABC RESULTS:          output signals:      137
 Removing temp directory.
-
-8.24.70. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by \state [1], synchronously reset by !\rst_n
 
 8.24.70.1. Executed ABC.
 Extracted 16 gates and 48 wires to a netlist network with 32 inputs and 15 outputs.
@@ -4594,10 +4594,7 @@ Removing temp directory.
 8.24.73. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, synchronously reset by !\rst_n
 
-8.24.74. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by \state [4], synchronously reset by !\rst_n
-
-8.24.74.1. Executed ABC.
+8.24.73.1. Executed ABC.
 Extracted 137 gates and 411 wires to a netlist network with 274 inputs and 136 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4618,13 +4615,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.74.2. Re-integrating ABC results.
+8.24.73.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      135
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      274
 ABC RESULTS:          output signals:      136
 Removing temp directory.
+
+8.24.74. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by \state [4], synchronously reset by !\rst_n
 
 8.24.74.1. Executed ABC.
 Extracted 17 gates and 51 wires to a netlist network with 34 inputs and 16 outputs.
@@ -4722,7 +4722,13 @@ Removing temp directory.
 8.24.77. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
 Found matching posedge clock domain: \clk, enabled by $logic_and$rtl/cache_controller.v:166$224_Y, synchronously reset by !\rst_n
 
-8.24.77.1. Executed ABC.
+8.24.78. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by \accept, synchronously reset by !\rst_n
+
+8.24.79. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk
+
+8.24.79.1. Executed ABC.
 Extracted 137 gates and 411 wires to a netlist network with 274 inputs and 136 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4743,7 +4749,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.77.2. Re-integrating ABC results.
+8.24.79.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      135
 ABC RESULTS:        internal signals:        1
@@ -4751,10 +4757,7 @@ ABC RESULTS:           input signals:      274
 ABC RESULTS:          output signals:      136
 Removing temp directory.
 
-8.24.78. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by \accept, synchronously reset by !\rst_n
-
-8.24.78.1. Executed ABC.
+8.24.79.1. Executed ABC.
 Extracted 18 gates and 53 wires to a netlist network with 35 inputs and 17 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4775,7 +4778,7 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.78.2. Re-integrating ABC results.
+8.24.79.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        3
 ABC RESULTS:               MUX cells:       15
 ABC RESULTS:        internal signals:        1
@@ -4783,13 +4786,7 @@ ABC RESULTS:           input signals:       35
 ABC RESULTS:          output signals:       17
 Removing temp directory.
 
-8.24.79. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk
-
-8.24.80. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
-Found matching posedge clock domain: \clk, enabled by \accept
-
-8.24.80.1. Executed ABC.
+8.24.79.1. Executed ABC.
 Extracted 137 gates and 411 wires to a netlist network with 274 inputs and 136 outputs.
 Running ABC script: <abc-temp-dir>/abc.script
 ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
@@ -4810,13 +4807,16 @@ ABC: + &nf
 ABC: + &put 
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
-8.24.80.2. Re-integrating ABC results.
+8.24.79.2. Re-integrating ABC results.
 ABC RESULTS:               AND cells:        2
 ABC RESULTS:               MUX cells:      135
 ABC RESULTS:        internal signals:        1
 ABC RESULTS:           input signals:      274
 ABC RESULTS:          output signals:      136
 Removing temp directory.
+
+8.24.80. Extracting gate netlist of module `\cache_controller' to `<abc-temp-dir>/input.blif'..
+Found matching posedge clock domain: \clk, enabled by \accept
 
 8.24.80.1. Executed ABC.
 Extracted 18 gates and 53 wires to a netlist network with 35 inputs and 17 outputs.
@@ -5396,6 +5396,6 @@ Found and reported 0 problems.
       212   $_XOR_
         6   $scopeinfo
 
-End of script. Logfile hash: a3c43603e4, time: 2.28s, user: 1.14s, system: 0.17s, MEM: 108.02 MB peak
+End of script. Logfile hash: 3e60977d26, time: 2.21s, user: 1.07s, system: 0.16s, MEM: 106.95 MB peak
 Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
-Time spent: 85% 1x abc (5 sec), 3% 28x opt_expr (0 sec), ...
+Time spent: 86% 1x abc (5 sec), 3% 28x opt_expr (0 sec), ...

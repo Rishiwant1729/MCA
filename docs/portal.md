@@ -1,81 +1,86 @@
-# Simulation Portal and Waveform Viewer
+# Simulation Portal
 
-A local web page that runs the real testbench with Icarus Verilog and shows the resulting waveform.
-It is an addition to the hardware project, not a replacement for any test: everything it shows is read back from a VCD
-file written by `$dumpfile`/`$dumpvars` in the testbench.
+A local web app that runs the real Icarus Verilog testbench and shows what happened: results, FSM path, cache lines,
+access trace and waveform. Five pages share one selected run: **Simulation, Cache Viewer, Waveform, Access Trace, Learn**.
+Everything shown is read from the VCD that the testbench wrote for that run, or from the RTL source text. Nothing is
+sample data. (UI layout and look follow the supplied *cache_controller_portal_ui_package* mockups; the numbers in those
+images were placeholders and are not used.)
 
 ## Start it (macOS)
-Requirements: the tools from the README (Icarus Verilog) and Python 3 (standard library only; no `pip install` needed).
+Requirements: Icarus Verilog (`brew install icarus-verilog`) and Python 3. No `pip install` is needed.
+
 ```bash
-make portal            # or: python3 portal/server.py
+make portal
 ```
-Open <http://127.0.0.1:8765/> in a browser. Stop with Ctrl-C. The server listens on `127.0.0.1` only.
+This starts the backend and opens <http://127.0.0.1:8765/> in your browser. Leave the Terminal window open while you use
+the portal; press Ctrl-C to stop it. You can also double-click **Start Portal.command** in Finder.
+If the page says *the simulation backend is not running*, the server is not started (or was stopped): run `make portal` again;
+the page reconnects by itself.
 
-## Using it
-1. **Pick a scenario and latency**, press *Compile & run*. Scenarios are the 11 testbench tests (T1–T11), the full suite
-   (waveform covers T1–T9) and a 5000-request random run that produces a large (~20 MB) VCD.
-2. **Results** show compiler messages (if any), each test's expected vs actual line, PASS/FAIL, the exact commands run and
-   a link to the raw simulation log. A compile error or a failing test is shown as such; a failing run still loads
-   whatever waveform it produced.
-3. **Waveform**: the banner above it names the run (id, scenario, latency, time, design hash, VCD path, size, sha256).
-   - Zoom: mouse wheel, ＋/－, keys `+`/`-`; fit: *Fit* or `0`.
-   - Pan: drag, ◀/▶, shift+wheel, or the slider under the waveform.
-   - Cursor: click the waveform or drag in the time ruler; `←`/`→` step one clock (shift: ten clocks) when the waveform has focus.
-   - Signals: use *Signals* to show or hide any of the 30 signals; click a group header to collapse or expand it.
-     The values at the cursor are shown beside each name.
-   - Buses are drawn as labelled segments in hex, binary or decimal (*Radix*); FSM states are shown by name.
-     Red hatching means the simulator wrote `x` (unknown/uninitialized).
-4. **Synchronized views** follow the cursor: the controller FSM diagram highlights the state at that time and shows the
-   latched address split into tag/index/offset, hit/miss and counters; the cache-line table shows each line's valid bit,
-   tag and data at that time (the line most recently refilled is highlighted, the line being accessed has an orange marker).
-5. **Download VCD** gives the original, unmodified file. *Copy GTKWave command* copies
-   `open -a gtkwave results/portal_runs/<run>/wave.vcd`.
+## Five-step demo
+1. **Simulation** page: choose *Direct-Mapped Conflict Miss*, latency 4, press **Run Simulation**. A progress bar shows
+   *compiling* then *simulating*; then the results cards, FSM, cache snapshot, mini waveform and trace fill in.
+2. Look at the **FSM**: the cloud-shaped states on the recorded path are highlighted and numbered. The text under it says
+   why (for example "line #0 held tag 0x0, request tag was 0x1, so MISS_REQ → WAIT_MEM → REFILL").
+3. Click a row in **Access Trace**. Every other page now points at that access. **View cache line** opens the Cache Viewer
+   on that line; **View waveform** moves the waveform cursor to that access.
+4. **Waveform**: scroll to zoom, drag to pan, click to place the cursor, ← → to step one clock, ⏮ ◀ ▶ ⏭ to jump between
+   accesses. **Download VCD** (top bar) gives the original file for GTKWave.
+5. **Learn**: tabs explain the architecture using the real configuration and, on *Performance*, the numbers measured in your run.
 
-Runs are stored in `results/portal_runs/<run_id>/` (`wave.vcd`, `sim.log`, `meta.json`, `sim.vvp`) and listed under *Previous runs*.
+## Pages
+| Page | What it shows | Source of the data |
+|---|---|---|
+| Simulation | Controls, results cards (accesses, hits, misses, hit rate, AMAT, cycles, memory transactions), address decoder, FSM, cache snapshot, mini waveform and trace | Backend run record + VCD trace |
+| Cache Viewer | 64-line table (valid, tag, 16 data bytes), search and valid/invalid filter, selected-line details, byte grid | Cache contents rebuilt from the VCD at a chosen time |
+| Waveform | 30 signals in collapsible groups, value at cursor, hex/binary/decimal/raw-bit display, state timeline, trace info | VCD (served in small windows) |
+| Access Trace | Table of every CPU access (cycle, address, tag, index, offset, hit/miss, FSM transition), filters, search, paging, summary, H/M/E sequence, CSV/JSON export | VCD |
+| Learn | Overview, cache basics, address mapping (interactive), FSM design, cache line format, Verilog tips, performance | RTL source text and the selected run |
 
-### Where the displayed data comes from
-- **Waveforms**: the backend parses the run's `wave.vcd` and serves only the visible time window. Dense windows are reduced to
-  the first and last change per pixel column (marked as dense); zooming in shows every transition.
-- **FSM view**: the value of `dut.state` from the VCD at the cursor time.
-- **Cache-line table**: the testbench cannot dump memory arrays to a VCD, so the table is *rebuilt from signals that are in
-  the VCD*: a line is written on the first clock edge after `dut.refill_en` rises, using the dumped `q_index`, `q_tag` and
-  `refill_block`; all valid bits clear on a clock edge where `rst_n` is low. `scripts/verify_portal.py` checks every
-  reconstructed line against the memory image.
-- **The `x` at the end of the full-suite waveform** is how `$dumpoff` records that dumping was switched off before T10
-  (to keep that VCD small). It is not a design fault.
+## How the numbers are obtained
+- **Access trace.** An access is accepted on a rising clock edge where `req_valid` and `req_ready` were both 1 just before
+  the edge (and `rst_n` was 1). Its response is the next edge where `resp_valid` was 1; hit, miss or error comes from
+  `resp_hit` / `resp_err`; the FSM path is read from `dut.state` at the edges in between.
+- **Metrics.** Hit rate = hits ÷ (hits + misses) (error responses excluded). *Hit time* is the measured average latency of
+  hits, *miss penalty* is (measured miss latency − hit time), and **AMAT = hit time + miss rate × miss penalty**; the average
+  latency is also measured directly and the two agree. When a scenario has no hits (for example the conflict test) a separate
+  hit time is not available, and the page says so.
+- **Cache contents.** A VCD cannot hold RAM arrays, so lines are rebuilt from signals that are in the VCD: a line is written
+  on the first clock edge after `dut.refill_en` rises (using `q_index`, `q_tag`, `refill_block`) and all valid bits clear on a
+  clock edge where `rst_n` is low. `make verify-portal` checks every reconstructed line against the memory image.
+- **Configuration** (1 KB, 16 B blocks, 64 lines, tag/index/offset widths, FSM names and encodings, counter count) is parsed
+  from `rtl/cache_controller.v`, not hard-coded in the page.
+- The full-suite waveform ends with `x` values: the testbench switches dumping off before test 10 (`$dumpoff`) to keep that
+  file small. It is not a design fault.
 
-## Safety model
-- The browser sends only a scenario id and a latency. The backend accepts ids from a fixed table and latencies from
-  `[1, 2, 4, 8, 16]`; anything else is rejected (HTTP 400). No command text, file path or file name comes from the browser.
-- Commands are fixed argument lists (`iverilog …`, `vvp …`) run without a shell, in the project directory, with
-  timeouts (compile 120 s, simulation 300 s). Output is size-limited.
-- Run ids must match `run_YYYYMMDD_HHMMSS_N` **and** be known to the server; static files are served only from `portal/static/`.
-- Request bodies over 1 KB are refused. The server binds to localhost only.
-- Heavy work stays on the backend: the browser requests small windows of data, so a 20 MB VCD does not freeze the page.
+## Safety
+The browser sends only a scenario id and a latency. Both are checked against fixed lists (13 scenarios; latency 1, 2, 4, 8, 16).
+Commands are fixed argument lists run without a shell, with timeouts. Run ids must match a strict pattern and exist in the
+server's own list; static files come only from `portal/static/`; request bodies over 1 KB are refused; the server listens on
+127.0.0.1 only. *Delete run* removes only that run's folder under `results/portal_runs/` (after a confirmation).
 
-## Verifying that waveforms are real
+## Check that it is honest
 ```bash
-make verify-portal          # python3 scripts/verify_portal.py
+make verify-portal
 ```
-For five runs (including the full suite and a 300-request random run) it checks: the VCD was written by Icarus Verilog and
-its sha256 matches the run record; the portal's indexed values equal an independent re-parse of the VCD at 400 random times
-for all 30 signals; the VCD's counters and `resp_valid` pulse count equal the numbers the simulator printed in its own log;
-reconstructed cache lines match the memory image; the download is byte-identical to the file on disk; and that bad scenarios,
-latencies, malformed or oversized JSON, path traversal and unknown run ids are rejected.
+For seven real runs this checks: VCD written by Icarus Verilog and matches its SHA-256; the portal's indexed values equal an
+independent re-parse of the VCD; the access trace equals a second, independent derivation (time, address and hit/miss/error
+of every access); trace totals equal the counters the simulator printed; latencies match the design timing; FSM paths are
+consistent; reconstructed cache lines match memory; CSV/JSON export belong to the run; asynchronous runs and delete work; and
+bad scenarios, latencies, malformed JSON, oversized bodies, path traversal and unknown run ids are rejected.
 
-## Troubleshooting (macOS)
+## Troubleshooting
 | Symptom | Fix |
 |---|---|
-| `iverilog: command not found` in the results panel | `brew install icarus-verilog`. The server adds `/opt/homebrew/bin` and `/usr/local/bin` to its PATH; run `which iverilog` to confirm where it is. |
-| `OSError: [Errno 48] Address already in use` | Another server is on port 8765: `lsof -i :8765`, then stop it (or `pkill -f portal/server.py`). |
-| Page says “Portal failed to start” | The server is not running; start `make portal` and reload. |
-| “Waveform load failed” / long wait on a big run | The first request for a run parses the VCD (a 20 MB file takes a few seconds). Retry after the spinner finishes. |
-| Compile error shown in Results | A real error in `rtl/` or `sim/`; the message is the Icarus output. Fix the file and run again. |
-| GTKWave does not open | Install it with `brew tap homebrew/cask && brew install --cask gtkwave` and open the downloaded `.vcd`; on first launch macOS may ask you to allow the app in System Settings → Privacy & Security. |
-| Old runs clutter the list | `make clean` removes `results/portal_runs/`. |
+| Red banner "backend is not running" | Run `make portal` in the project folder (or double-click `Start Portal.command`). |
+| `iverilog: command not found` in the results | `brew install icarus-verilog`. |
+| `Port 8765 is in use by another program` | `lsof -i :8765`, stop that process, or `pkill -f portal/server.py` and start again. |
+| "That run no longer exists" | The run folder was deleted (for example by `make clean`). Start a new simulation. |
+| A big run (5000 requests, about 20 MB VCD) takes a few seconds the first time | The backend parses the VCD once; later requests are instant. |
+| GTKWave | `brew tap homebrew/cask && brew install --cask gtkwave`, then open the downloaded `.vcd`. |
+| Browser console shows `Failed to load resource` while the server is stopped | The browser reports failed requests itself; the page stops requesting and retries with increasing delays until the server is back. |
 
 ## Limitations
-- Only the cache testbench scenarios listed above can be run; custom Verilog cannot be submitted (by design).
-- Only 30 signals are indexed in the browser view; the VCD itself contains all testbench and DUT signals for GTKWave.
-- Cache contents are reconstructed, not dumped; arrays inside RAM modules are not in the VCD.
-- Multiple simultaneous runs are serialized by a lock.
+Only the listed testbench scenarios can run (custom Verilog cannot be submitted, by design). The VCD holds 30 indexed signals plus
+everything else for GTKWave. Cache contents are reconstructed, not dumped. Only one simulation runs at a time. Synchronization
+between the trace and the waveform is exact because both come from the same VCD timestamps.

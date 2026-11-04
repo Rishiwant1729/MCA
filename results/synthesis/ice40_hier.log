@@ -3085,7 +3085,7 @@ ABC: P:  Del = 4222.00.  Ar =     265.0.  Edge =     1009.  Cut =     7414.  T =
 ABC: F:  Del = 4222.00.  Ar =     260.0.  Edge =     1004.  Cut =     7413.  T =     0.00 sec
 ABC: A:  Del = 4222.00.  Ar =     260.0.  Edge =      996.  Cut =     7403.  T =     0.00 sec
 ABC: A:  Del = 4222.00.  Ar =     260.0.  Edge =      996.  Cut =     7403.  T =     0.00 sec
-ABC: Total time =     0.01 sec
+ABC: Total time =     0.00 sec
 ABC: + &write -n <abc-temp-dir>/output.aig 
 ABC: + &mfs 
 ABC: + &ps -l 
@@ -3094,7 +3094,7 @@ ABC: Mapping (K=4)  :  lut =    238  edge =     907  lev =    7 (0.25)  levB =  
 ABC: LUT = 238 : 2=18 7.6 %  3=9 3.8 %  4=211 88.7 %  Ave = 3.81
 ABC: + &write -n <abc-temp-dir>/output.aig 
 ABC: + &verify 
-ABC: Networks are equivalent.  Time =     0.02 sec
+ABC: Networks are equivalent.  Time =     0.01 sec
 ABC: + time 
 ABC: elapse: 0.06 seconds, total: 0.06 seconds
 
@@ -3702,6 +3702,6 @@ Found and reported 0 problems.
         2   $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder
         1   $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000
 
-End of script. Logfile hash: dd275c5d76, time: 2.09s, user: 1.47s, system: 0.07s, MEM: 56.92 MB peak
+End of script. Logfile hash: e0bef5ac30, time: 1.63s, user: 1.30s, system: 0.03s, MEM: 58.11 MB peak
 Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
-Time spent: 39% 11x techmap (0 sec), 18% 6x abc9_exe (0 sec), ...
+Time spent: 36% 11x techmap (0 sec), 19% 26x read_verilog (0 sec), ...
