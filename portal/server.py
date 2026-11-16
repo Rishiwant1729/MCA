@@ -515,13 +515,15 @@ def main():
         except OSError:
             sys.exit(f"Port {PORT} is in use by another program. Stop it (lsof -i :{PORT}) and try again.")
     print(f"Cache portal running at {url}\nLeave this window open while you use it. Press Ctrl-C to stop.", flush=True)
-    if not no_open:
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
-    try:
-        srv.serve_forever()
-    except KeyboardInterrupt:
-        pass
 
+    # change to be done
+    # if not no_open:
+    #     threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+    # try:
+    #     srv.serve_forever()
+    # except KeyboardInterrupt:
+    #     pass
+# just adding the commit
 
 if __name__ == "__main__":
     main()
