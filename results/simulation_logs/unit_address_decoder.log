@@ -1,2 +1,0 @@
-tb_address_decoder: PASS
-sim/unit/tb_address_decoder.v:32: $finish called at 20006000 (1ps)

@@ -1,4 +1,0 @@
-WARNING: sim/tb_perf.v:75: $readmemh(sim/test_vectors/sequential.hex): Not enough words in the file for the requested range [0:65535].
-PERF workload=sequential lat=1 n=4096 hits=3072 misses=1024 mem_reads=1024 completed=4096 cycles=18435 mem_wait=5120 hit_lat_sum=6144 miss_lat_sum=8192 data_errors=0
-PERF_OK
-sim/tb_perf.v:99: $finish called at 184380000 (1ps)

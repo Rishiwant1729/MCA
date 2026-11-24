@@ -1,2 +1,0 @@
-tb_storage: PASS
-sim/unit/tb_storage.v:70: $finish called at 1610000 (1ps)
