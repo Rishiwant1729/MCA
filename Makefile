@@ -18,9 +18,9 @@ waves:
 	.venv/bin/python -I scripts/plot_waveform.py results/waveforms/phase4_lat4.vcd docs/diagrams/waveform_miss_then_hits.png
 	@for d in fsm block_diagram; do dot -Tpng -Gdpi=130 docs/diagrams/$$d.dot -o docs/diagrams/$$d.png; done
 portal:
-	python3 portal/server.py
+	python3 extras/portal/server.py
 verify-portal:
-	python3 scripts/verify_portal.py
+	python3 extras/portal/verify_portal.py
 report:
 	.venv/bin/python -I scripts/make_report_figures.py
 	cd report && pdflatex -interaction=nonstopmode main.tex >/dev/null && pdflatex -interaction=nonstopmode main.tex >/dev/null && pdflatex -interaction=nonstopmode main.tex >/dev/null && cp main.pdf Direct_Mapped_Cache_Controller_IEEE_Report.pdf

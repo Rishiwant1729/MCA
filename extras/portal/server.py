@@ -27,7 +27,7 @@ from urllib.parse import parse_qs, urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from vcd_index import SIGNALS, STATE_NAMES, MSTATE_NAMES, UNKNOWN, VcdIndex, build_accesses  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 # GUI-launched shells may lack Homebrew on PATH; approved tools are looked up from these places only
 os.environ["PATH"] = os.pathsep.join(["/opt/homebrew/bin", "/usr/local/bin", os.environ.get("PATH", "")])
 STATIC = Path(__file__).resolve().parent / "static"

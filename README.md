@@ -40,7 +40,7 @@ make portal
 Opens <http://127.0.0.1:8765/> (leave the Terminal window open; Ctrl-C stops it; or double-click `Start Portal.command`).
 Four pages (Simulation, Cache Viewer, Waveform, Access Trace) share one selected run. Pick a scenario, press **Run Simulation**,
 and inspect the real results, FSM path, cache lines, access trace and VCD waveform; **Download VCD** opens in GTKWave.
-Details, how each number is obtained, safety model and troubleshooting: [docs/portal.md](docs/portal.md).
+Details, how each number is obtained, safety model and troubleshooting: [extras/portal/README.md](extras/portal/README.md).
 
 ## IEEE report
 `report/Direct_Mapped_Cache_Controller_IEEE_Report.pdf` (source `report/main.tex`, IEEEtran class) is the single project report: Abstract, Introduction,
@@ -53,7 +53,7 @@ Individual Contributions table of `report/main.tex`.
 ```
 rtl/        synthesizable design (address_decoder, cache_data/tag/valid_ram, main_memory_interface, cache_controller)
 sim/        simulation only: main_memory_model, reference_memory, tb_cache_controller, tb_perf, tb_integration, unit/, test_vectors/
-portal/     server.py (local backend), vcd_index.py (VCD reader + access trace), static/ (four-page browser UI)
+extras/portal/  server.py (local backend), vcd_index.py (VCD reader + access trace), static/ (four-page browser UI)
 scripts/    run_simulation.sh, run_synthesis.sh, analyze_results.py, plot_waveform.py, verify_portal.py
 results/    simulation_logs/, waveforms/, performance/, synthesis/   (generated)
 docs/       architecture.md, fsm_design.md, portal.md, diagrams/   (design notes)

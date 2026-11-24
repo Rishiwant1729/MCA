@@ -11,7 +11,7 @@ Checks (all must pass):
   4. Cache contents reconstructed from the dumped signals match the memory image for every valid line.
   5. The VCD download is byte-identical to the file on disk.
   6. Backend rejects unapproved scenarios/latencies, malformed JSON, path traversal and unknown run ids.
-Usage:  python3 scripts/verify_portal.py
+Usage:  python3 extras/portal/verify_portal.py
 """
 import bisect
 import hashlib
@@ -26,8 +26,8 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "portal"))
+ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT / "extras" / "portal"))
 import server  # noqa: E402
 from vcd_index import SIGNALS, VcdIndex, UNKNOWN  # noqa: E402
 

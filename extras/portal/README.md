@@ -58,7 +58,7 @@ the page reconnects by itself.
 ## Safety
 The browser sends only a scenario id and a latency. Both are checked against fixed lists (13 scenarios; latency 1, 2, 4, 8, 16).
 Commands are fixed argument lists run without a shell, with timeouts. Run ids must match a strict pattern and exist in the
-server's own list; static files come only from `portal/static/`; request bodies over 1 KB are refused; the server listens on
+server's own list; static files come only from `extras/portal/static/`; request bodies over 1 KB are refused; the server listens on
 127.0.0.1 only. *Delete run* removes only that run's folder under `results/portal_runs/` (after a confirmation).
 
 ## Check that it is honest
@@ -76,7 +76,7 @@ bad scenarios, latencies, malformed JSON, oversized bodies, path traversal and u
 |---|---|
 | Red banner "backend is not running" | Run `make portal` in the project folder (or double-click `Start Portal.command`). |
 | `iverilog: command not found` in the results | `brew install icarus-verilog`. |
-| `Port 8765 is in use by another program` | `lsof -i :8765`, stop that process, or `pkill -f portal/server.py` and start again. |
+| `Port 8765 is in use by another program` | `lsof -i :8765`, stop that process, or `pkill -f extras/portal/server.py` and start again. |
 | "That run no longer exists" | The run folder was deleted (for example by `make clean`). Start a new simulation. |
 | A big run (5000 requests, about 20 MB VCD) takes a few seconds the first time | The backend parses the VCD once; later requests are instant. |
 | GTKWave | `brew tap homebrew/cask && brew install --cask gtkwave`, then open the downloaded `.vcd`. |
