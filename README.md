@@ -15,7 +15,7 @@ Everything here is simulation (Icarus Verilog) and synthesis (Yosys) on macOS; *
 | RTL source | [`rtl/`](rtl/) |
 | Testbenches (unit, system, performance) | [`testbench/`](testbench/) |
 | Diagrams (SVG and PNG, TikZ sources) | [`diagrams/`](diagrams/) |
-| Waveform images and VCD generation | [`docs/images/`](docs/images/), [`simulation/waveforms/`](simulation/waveforms/) |
+| Waveform images and VCD generation | [`docs/images/`](docs/images/); VCDs regenerate into `simulation/waveforms/` |
 | Verification, performance and synthesis notes | [`docs/verification.md`](docs/verification.md), [`docs/perf_results.md`](docs/perf_results.md), [`docs/synthesis.md`](docs/synthesis.md) |
 | Yosys scripts and reports | [`synth/`](synth/) |
 

@@ -30,4 +30,4 @@ the request is held in `main_memory_interface` (M_REQ) until accepted, and a pro
 
 Waveform of a cold miss followed by two hits (LAT = 4, from simulation):
 
-![waveform](diagrams/waveform_miss_then_hits.png)
+![waveform](images/wave_cold_miss.png)

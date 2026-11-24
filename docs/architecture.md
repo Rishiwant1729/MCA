@@ -1,6 +1,6 @@
 # Architecture (as built)
 
-![block diagram](diagrams/block_diagram.png)
+![block diagram](../diagrams/block_diagram.png)
 
 ## Concepts
 - **Memory hierarchy.** The processor is much faster than main memory, so a small fast cache sits between them. It is useful because of
