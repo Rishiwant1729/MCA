@@ -16,11 +16,12 @@ module tb_cache_controller;
     parameter LAT   = 4;
     parameter SEED  = 1;
     parameter NRAND = 5000;
+    parameter ACCEPT_DELAY = 0;       // memory back-pressure: cycles mem_req_ready is held low (0 = none)
 
     localparam MEM_BYTES = 65536;
     localparam HIT_LAT   = 2;          // measured in Phase 4: accept edge -> resp edge
-    localparam MISS_LAT  = LAT + 7;
-    localparam WAIT_PER_MISS = LAT + 4;
+    localparam MISS_LAT  = LAT + 7 + ACCEPT_DELAY;
+    localparam WAIT_PER_MISS = LAT + 4 + ACCEPT_DELAY;
 
     // ------------------------------------------------------------ DUT + models
     reg clk = 0, rst_n = 0;
@@ -46,7 +47,7 @@ module tb_cache_controller;
         .stat_mem_reads(s_mrd), .stat_completed(s_cmp), .stat_cycles(s_cyc),
         .stat_mem_wait_cycles(s_wait));
 
-    main_memory_model #(.MEM_BYTES(MEM_BYTES), .LATENCY(LAT)) mem (.clk(clk), .rst_n(rst_n),
+    main_memory_model #(.MEM_BYTES(MEM_BYTES), .LATENCY(LAT), .ACCEPT_DELAY(ACCEPT_DELAY)) mem (.clk(clk), .rst_n(rst_n),
         .mem_req_valid(mreq_v), .mem_req_ready(mreq_r), .mem_req_addr(mreq_a),
         .mem_resp_valid(mresp_v), .mem_resp_data(mresp_d));
 
@@ -66,8 +67,8 @@ module tb_cache_controller;
     // ------------------------------------------------------------ test bookkeeping
     integer test_no = 0, test_fail = 0, test_checks = 0;
     integer n_tests = 0, n_failed = 0;
-    reg [8*28-1:0] res_name [1:11];
-    reg            res_pass [1:11];
+    reg [8*28-1:0] res_name [1:12];
+    reg            res_pass [1:12];
     reg [8*28-1:0] cur_name;
 
     task fail(input [8*56-1:0] msg);
@@ -144,6 +145,31 @@ module tb_cache_controller;
         end
     end
     initial stall_cycles = 0;
+
+    // ------------------------------------------------------------ memory-side protocol checker
+    // Rules checked on every clock while out of reset:
+    //   P1 mem_req_valid, once raised, stays high with a stable address until mem_req_ready accepts it
+    //   P2 the request address is block aligned
+    //   P3 no new request is accepted while a read is still outstanding (no duplicate transactions)
+    //   P4 mem_resp_valid only occurs while a read is outstanding, and is a single-cycle pulse
+    //   P5 no more than one memory read per cache miss (checked per test through stat_mem_reads == misses)
+    reg        pc_pend = 0, pc_outst = 0, pc_resp_prev = 0;
+    reg [31:0] pc_addr;
+    always @(posedge clk) begin
+        if (!rst_n) begin pc_pend <= 0; pc_outst <= 0; pc_resp_prev <= 0; end
+        else begin
+            if (pc_pend && !mreq_v) fail("P1 mem_req_valid dropped before ready");
+            if (pc_pend && mreq_v && mreq_a !== pc_addr) fail("P1 mem_req_addr changed while pending");
+            if (mreq_v && mreq_a[3:0] !== 4'd0) fail("P2 mem_req_addr not block aligned");
+            if (mreq_v && mreq_r && pc_outst) fail("P3 request accepted with a read outstanding");
+            if (mresp_v && !pc_outst) fail("P4 mem_resp_valid without outstanding read");
+            if (mresp_v && pc_resp_prev) fail("P4 mem_resp_valid held for more than one cycle");
+            pc_resp_prev <= mresp_v;
+            pc_pend <= mreq_v && !mreq_r; pc_addr <= mreq_a;
+            if (mresp_v) pc_outst <= 0;
+            if (mreq_v && mreq_r) pc_outst <= 1;
+        end
+    end
 
     // ------------------------------------------------------------ driver helpers
     task do_reset;
@@ -253,7 +279,8 @@ module tb_cache_controller;
     reg [8*256-1:0] vcd_path;
 
     initial begin
-        // +test=N runs only test N (default: all). +vcd=<file> or +dump selects waveform output.
+        // +test=N runs only test N (default: all). +vcd=<file> or +dump selects waveform output;
+        // +fulldump keeps dumping through test 10 (otherwise a full-suite dump stops there to bound the file size).
         sel = 0;  if ($value$plusargs("test=%d", sel)) ;
         if ($value$plusargs("vcd=%s", vcd_path)) begin
             $dumpfile(vcd_path);
@@ -378,11 +405,11 @@ module tb_cache_controller;
         begin_test(8, "memory_latency", "miss takes LAT+7 cycles (waits for memory), memory-wait = LAT+4, hit takes 2");
         r0 = s_wait;
         access(32'h0000_1000, 0);
-        chk_eq(lat, LAT + 7, "miss latency");
-        chk_eq(s_wait - r0, LAT + 4, "memory wait cycles for one miss");
+        chk_eq(lat, MISS_LAT, "miss latency");
+        chk_eq(s_wait - r0, WAIT_PER_MISS, "memory wait cycles for one miss");
         access(32'h0000_1000, 1);
         chk_eq(lat, 2, "hit latency");
-        chk_eq(MISS_LAT - HIT_LAT, LAT + 5, "miss penalty = LAT+5");
+        chk_eq(MISS_LAT - HIT_LAT, LAT + 5 + ACCEPT_DELAY, "miss penalty = LAT+5+ACCEPT_DELAY");
         $display("      measured: hit=%0d cycles, miss=%0d cycles, penalty=%0d", HIT_LAT, MISS_LAT, MISS_LAT - HIT_LAT);
         end_test;
         end
@@ -428,7 +455,7 @@ module tb_cache_controller;
         end
 
         // ---- T10 randomized
-        if (sel == 0) $dumpoff;                     // full run: keep the waveform small (T1-T9 are the evidence)
+        if (sel == 0 && !$test$plusargs("fulldump")) $dumpoff;                     // full run: keep the waveform small (T1-T9 are the evidence)
         if (sel == 0 || sel == 10) begin
         begin_test(10, "randomized", "NRAND reproducible random reads (local/wide/conflict mix, idle gaps, rare resets) all match the models");
         for (n = 0; n < NRAND; n = n + 1) begin
@@ -470,13 +497,30 @@ module tb_cache_controller;
         end_test;
         end
 
+        // ---- T12 conflict example from the project brief: 100, 1124, 100, 104
+        if (sel == 0 || sel == 12) begin
+        begin_test(12, "conflict_100_1124_104", "100 -> 1124 -> 100: MISS MISS MISS (same line, tags 0/1); then 100 -> 104: MISS HIT (same block)");
+        chk(((100 >> 4) & 63) == 6 && (100 >> 10) == 0 && (100 >> 4) == 6, "100: block 6, index 6, tag 0");
+        chk(((1124 >> 4) & 63) == 6 && (1124 >> 10) == 1 && (1124 >> 4) == 70, "1124: block 70, index 6, tag 1");
+        r0 = mem_reqs;
+        access(100, 0);   chk(dut.u_tag.mem[6] === 22'd0 && dut.u_valid.valid[6] === 1'b1, "line 6 holds tag 0, valid");
+        access(1124, 0);  chk(dut.u_tag.mem[6] === 22'd1 && dut.u_valid.valid[6] === 1'b1, "line 6 replaced: tag 1, valid");
+        access(100, 0);   chk(dut.u_tag.mem[6] === 22'd0, "line 6 replaced back: tag 0");
+        chk_eq(mem_reqs - r0, 3, "three misses = three block reads");
+        access(104, 1);                                   // 104 is in the same 16-byte block as 100 (block 6)
+        chk_eq(mem_reqs - r0, 3, "hit must not read memory");
+        get_block(32'd96, blk); peek_idx = 6; #1;
+        chk(peek_line === blk, "line 6 data equals main-memory block 6");
+        end_test;
+        end
+
         // ---- summary
         $display("");
         $display("==================== SUMMARY (LAT=%0d, SEED=%0d) ====================", LAT, SEED);
-        for (i = 1; i <= 11; i = i + 1)
+        for (i = 1; i <= 12; i = i + 1)
             if (sel == 0 || sel == i)
                 $display("  T%0d %0s : %0s", i, res_name[i], res_pass[i] ? "PASS" : "FAIL");
-        if (n_failed == 0 && n_tests == (sel == 0 ? 11 : 1)) begin
+        if (n_failed == 0 && n_tests == (sel == 0 ? 12 : 1)) begin
             $display("SUMMARY: PASS (%0d/%0d tests)", n_tests - n_failed, n_tests);
             $finish;
         end else begin
