@@ -1,0 +1,7 @@
+# Lattice iCE40 primitives, flattened. Block RAM inferred (SB_RAM40_4K). Used only as a representative FPGA resource model; no place-and-route.
+# Run from the repository root:  yosys -l results/synthesis/ice40.log -s synth/ice40_flat.ys   (or: make synth)
+read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v
+hierarchy -check -top cache_controller
+synth_ice40 -top cache_controller -json results/synthesis/ice40.json
+check -assert
+tee -o results/synthesis/ice40_stat.txt stat

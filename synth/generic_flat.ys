@@ -1,0 +1,7 @@
+# Technology-independent gates, flattened (whole-design statistics). Memories become flip-flops + muxes.
+# Run from the repository root:  yosys -l results/synthesis/generic_flat.log -s synth/generic_flat.ys   (or: make synth)
+read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v
+hierarchy -check -top cache_controller
+synth -top cache_controller -flatten
+check -assert
+tee -o results/synthesis/generic_flat_stat.txt stat

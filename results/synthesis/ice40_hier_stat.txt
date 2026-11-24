@@ -1,5 +1,5 @@
 
-9. Printing statistics.
+10. Printing statistics.
 
 === $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram ===
 

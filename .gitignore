@@ -1,4 +1,25 @@
+# tools / environment
 .venv/
-*.vvp
 __pycache__/
+.DS_Store
+*.vvp
+
+# generated simulation output (reproduce with: make regression / make wave TEST=...)
+results/waveforms/*.vcd
+results/simulation_logs/*.log
+# tb_cache_lat4.log is kept as verification evidence (expected vs actual per test)
+!results/simulation_logs/tb_cache_lat4.log
 results/portal_runs/
+
+# generated synthesis output (reproduce with: make synth); the *_stat.txt reports and SUMMARY.md stay tracked
+results/synthesis/*.json
+results/synthesis/*.log
+
+# LaTeX build files (the report PDF and sources stay tracked)
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.bbl
+report/*.blg
+report/main.pdf

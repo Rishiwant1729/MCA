@@ -6,7 +6,7 @@
  \----------------------------------------------------------------------------/
  Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
 
--- Running command `read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v; hierarchy -check -top cache_controller; synth_ice40 -top cache_controller -json results/synthesis/ice40.json; tee -o results/synthesis/ice40_stat.txt stat' --
+-- Executing script file `synth/ice40_flat.ys' --
 
 1. Executing Verilog-2005 frontend: rtl/address_decoder.v
 Parsing SystemVerilog input from `rtl/address_decoder.v' to AST representation.
@@ -1984,7 +1984,7 @@ ABC: + &write -n <abc-temp-dir>/output.aig
 ABC: + &verify 
 ABC: Networks are equivalent.  Time =     0.03 sec
 ABC: + time 
-ABC: elapse: 0.11 seconds, total: 0.11 seconds
+ABC: elapse: 0.10 seconds, total: 0.10 seconds
 
 8.43.14.6. Executing AIGER frontend.
 <suppressed ~10 debug messages>
@@ -2227,7 +2227,11 @@ Found and reported 0 problems.
 
 8.52. Executing JSON backend.
 
-9. Printing statistics.
+9. Executing CHECK pass (checking for obvious problems).
+Checking module cache_controller...
+Found and reported 0 problems.
+
+10. Printing statistics.
 
 === cache_controller ===
 
@@ -2248,6 +2252,6 @@ Found and reported 0 problems.
       635   SB_LUT4
        18   SB_RAM40_4K
 
-End of script. Logfile hash: 63f6901f19, time: 1.45s, user: 1.24s, system: 0.03s, MEM: 50.69 MB peak
+End of script. Logfile hash: 600a30024f, time: 1.32s, user: 1.18s, system: 0.02s, MEM: 54.98 MB peak
 Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
 Time spent: 43% 11x techmap (0 sec), 23% 26x read_verilog (0 sec), ...

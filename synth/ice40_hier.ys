@@ -1,0 +1,7 @@
+# Lattice iCE40 primitives, hierarchy kept (per-module numbers).
+# Run from the repository root:  yosys -l results/synthesis/ice40_hier.log -s synth/ice40_hier.ys   (or: make synth)
+read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v
+hierarchy -check -top cache_controller
+synth_ice40 -top cache_controller -noflatten
+check -assert
+tee -o results/synthesis/ice40_hier_stat.txt stat

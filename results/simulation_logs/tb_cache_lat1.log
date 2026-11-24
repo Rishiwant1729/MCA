@@ -45,6 +45,10 @@
       expected: first/last valid word OK; misaligned, out-of-range, write requests -> resp_err, no memory read
       actual  : checks=43 failures=0 | requests=11 hits=2 misses=3 mem_reads=3 (LAT=1)
       result  : PASS
+[T12] conflict_100_1124_104
+      expected: 100 -> 1124 -> 100: MISS MISS MISS (same line, tags 0/1); then 100 -> 104: MISS HIT (same block)
+      actual  : checks=28 failures=0 | requests=4 hits=1 misses=3 mem_reads=3 (LAT=1)
+      result  : PASS
 
 ==================== SUMMARY (LAT=1, SEED=1) ====================
   T1 cold_miss : PASS
@@ -58,5 +62,6 @@
   T9 request_handshake : PASS
   T10 randomized : PASS
   T11 boundary_and_errors : PASS
-SUMMARY: PASS (11/11 tests)
-sim/tb_cache_controller.v:481: $finish called at 502170000 (1ps)
+  T12 conflict_100_1124_104 : PASS
+SUMMARY: PASS (12/12 tests)
+sim/tb_cache_controller.v:524: $finish called at 502550000 (1ps)

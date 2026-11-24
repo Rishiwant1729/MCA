@@ -6,7 +6,7 @@
  \----------------------------------------------------------------------------/
  Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
 
--- Running command `read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v; hierarchy -check -top cache_controller; synth_ice40 -top cache_controller -noflatten; tee -o results/synthesis/ice40_hier_stat.txt stat' --
+-- Executing script file `synth/ice40_hier.ys' --
 
 1. Executing Verilog-2005 frontend: rtl/address_decoder.v
 Parsing SystemVerilog input from `rtl/address_decoder.v' to AST representation.
@@ -3567,7 +3567,16 @@ Checking module $paramod\cache_valid_ram\NUM_LINES=s32'0000000000000000000000000
 Checking module cache_controller...
 Found and reported 0 problems.
 
-9. Printing statistics.
+9. Executing CHECK pass (checking for obvious problems).
+Checking module $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram...
+Checking module $paramod$c8f835f0c62982cd0de692153653414b1a004fec\main_memory_interface...
+Checking module $paramod$cccfb2753cc081460739e2a079a55d762f5af76a\cache_tag_ram...
+Checking module $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder...
+Checking module $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000...
+Checking module cache_controller...
+Found and reported 0 problems.
+
+10. Printing statistics.
 
 === $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram ===
 
@@ -3702,6 +3711,6 @@ Found and reported 0 problems.
         2   $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder
         1   $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000
 
-End of script. Logfile hash: e0bef5ac30, time: 1.63s, user: 1.30s, system: 0.03s, MEM: 58.11 MB peak
+End of script. Logfile hash: 96b4a5e553, time: 1.60s, user: 1.28s, system: 0.03s, MEM: 59.94 MB peak
 Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, AppleClang clang++ 21.0.0.21000334)
-Time spent: 36% 11x techmap (0 sec), 19% 26x read_verilog (0 sec), ...
+Time spent: 37% 11x techmap (0 sec), 19% 26x read_verilog (0 sec), ...
