@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Summarise the Yosys statistics in results/synthesis/ into results/synthesis/SUMMARY.md.
+"""Summarise the Yosys statistics in synth/ into synth/SUMMARY.md.
 Every number is parsed from the *_stat.txt and *.log files written by scripts/run_synthesis.sh; none is typed in."""
 import re
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "results" / "synthesis"
+OUT = Path(__file__).resolve().parent.parent / "synth"
 
 
 def parse(path):

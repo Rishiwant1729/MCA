@@ -9,8 +9,7 @@ iverilog -g2012 -Wall -o /dev/null "${RTL[@]}" 2>&1 | quiet; [ "${PIPESTATUS[0]}
 echo "== RTL elaboration (yosys proc; check -assert) =="
 yosys -q -p "read_verilog -sv ${RTL[*]}; hierarchy -check -top cache_controller; proc; check -assert" || status=1
 echo "== testbenches =="
-iverilog -g2012 -o $LOGS/tb_address_decoder.vvp rtl/address_decoder.v sim/unit/tb_address_decoder.v 2>&1 | quiet; [ "${PIPESTATUS[0]}" -ne 0 ] && status=1
-iverilog -g2012 -o $LOGS/tb_storage.vvp rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v sim/unit/tb_storage.v 2>&1 | quiet; [ "${PIPESTATUS[0]}" -ne 0 ] && status=1
+for u in "${UNITS[@]}"; do build_unit "$u" || { echo "unit testbench $u failed to compile"; status=1; }; done
 build_tb 4 0 $LOGS/tb_cache_lat4.vvp || status=1
 [ $status -eq 0 ] && echo "COMPILE OK" || echo "COMPILE FAILED"
 exit $status

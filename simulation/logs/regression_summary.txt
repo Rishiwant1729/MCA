@@ -1,0 +1,20 @@
+Regression 2026-11-24 17:29:02  (Icarus Verilog version 13.0 (stable) (v13_0))
+PASS unit address_decoder  (tb_address_decoder: PASS (40005 checks, 0 failures))
+PASS unit tag_comparator  (tb_tag_comparator: PASS (5091 checks, 0 failures))
+PASS unit hit_miss_unit  (tb_hit_miss_unit: PASS (8 checks, 0 failures))
+PASS unit storage  (tb_storage: PASS (74 checks, 0 failures))
+PASS latency  (LAT=1 ACCEPT_DELAY=0 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS latency  (LAT=2 ACCEPT_DELAY=0 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS latency  (LAT=4 ACCEPT_DELAY=0 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS latency  (LAT=8 ACCEPT_DELAY=0 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS latency  (LAT=16 ACCEPT_DELAY=0 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS back-pressure  (LAT=1 ACCEPT_DELAY=1 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS back-pressure  (LAT=4 ACCEPT_DELAY=1 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS back-pressure  (LAT=1 ACCEPT_DELAY=3 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS back-pressure  (LAT=4 ACCEPT_DELAY=3 SEED=1)  SUMMARY: PASS (12/12 tests)
+PASS random seed  (LAT=4 ACCEPT_DELAY=0 SEED=2)  SUMMARY: PASS (12/12 tests)
+PASS random seed  (LAT=4 ACCEPT_DELAY=0 SEED=3)  SUMMARY: PASS (12/12 tests)
+PASS random seed  (LAT=4 ACCEPT_DELAY=0 SEED=4)  SUMMARY: PASS (12/12 tests)
+----
+16 of 16 regression runs passed
+REGRESSION PASS

@@ -98,8 +98,11 @@ module cache_controller #(
         .wr_en(refill_en), .wr_index(q_index), .wr_valid(1'b1));
 
     // ---------------- hit / miss ----------------
-    // An invalid line is always a miss, whatever tag it holds.
-    wire hit = rd_valid && (rd_tag == q_tag);
+    // tag_comparator: stored tag == request tag.  hit_miss_unit: hit = valid && tag match,
+    // so an invalid line is always a miss, whatever tag it holds.
+    wire tag_match, hit, miss;
+    tag_comparator #(.TAG_W(TAG_W)) u_cmp (.stored_tag(rd_tag), .request_tag(q_tag), .match(tag_match));
+    hit_miss_unit u_hm (.valid(rd_valid), .tag_match(tag_match), .hit(hit), .miss(miss));
 
     // ---------------- memory side ----------------
     wire mem_done;
@@ -164,7 +167,7 @@ module cache_controller #(
             stat_cycles <= stat_cycles + 1;
             if (accept)                  stat_requests  <= stat_requests + 1;
             if (state == S_LOOKUP && hit)  stat_hits   <= stat_hits + 1;
-            if (state == S_LOOKUP && !hit) stat_misses <= stat_misses + 1;
+            if (state == S_LOOKUP && miss) stat_misses <= stat_misses + 1;
             if (mem_start)               stat_mem_reads <= stat_mem_reads + 1;
             if (resp_valid)              stat_completed <= stat_completed + 1;
             // memory-wait: every cycle from MISS_REQ until the block arrives

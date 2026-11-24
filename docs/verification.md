@@ -1,11 +1,11 @@
 # Verification
 
-All results below were produced by `make regression` and `make test` (Icarus Verilog 13.0). Logs: `results/simulation_logs/tb_cache_lat4.log`
-(expected vs actual for every test, tracked in git) and `results/simulation_logs/regression_summary.txt` (last regression run).
+All results below were produced by `make regression` and `make test` (Icarus Verilog 13.0). Logs: `simulation/logs/tb_cache_lat4.log`
+(expected vs actual for every test, tracked in git) and `simulation/logs/regression_summary.txt` (last regression run).
 Other logs are regenerated on demand and are not tracked.
 
 ## Method
-Two independent layers run on every simulation (`sim/tb_cache_controller.v`):
+Two independent layers run on every simulation (`testbench/tb_cache_controller.v`):
 
 1. **Monitor.** At each accepted request it computes the expected word from `reference_memory` (a golden model separate from the
    simulated memory) and the expected hit/miss from a behavioural valid/tag model inside the testbench. Every response is checked
@@ -51,11 +51,21 @@ both mapping to line 6. After each access it reads the tag and valid RAMs of lin
 three memory reads for the three misses, none for the hit on 104 (same 16-byte block as 100), and compares the stored line with
 the main-memory block.
 
-Unit tests: `sim/unit/tb_address_decoder.v` (decoder against bit slicing for 20,000 random addresses, plus a second geometry) and
-`sim/unit/tb_storage.v` (data, tag and valid arrays): both PASS.
+## Unit tests (one testbench per module, `testbench/tb_<module>.v`)
+
+| Testbench | Module | What it checks | Checks | Result |
+|---|---|---|---|---|
+| `tb_address_decoder` | `address_decoder` | bit slicing for 20,000 random addresses in two geometries, corner cases | 40005 | PASS |
+| `tb_tag_comparator` | `tag_comparator` | 3-bit exhaustive, each single-bit difference, corner and random 22-bit cases | 5091 | PASS |
+| `tb_hit_miss_unit` | `hit_miss_unit` | full truth table; invalid line misses even when the tags match | 8 | PASS |
+| `tb_storage` | data, tag, valid RAMs | reset clears valid bits, tag/data read and write, read hold, byte mask | 74 | PASS |
+
+Check counts are printed by each testbench (`make test`). Breaking `hit_miss_unit` (ignoring the valid bit) or `tag_comparator` (dropping a tag bit)
+makes the matching unit test fail; ignoring only tag bit 21 is caught by the unit test but not by the system tests, because the 64 KB memory model
+never produces an address with bit 31 set.
 
 ## Regression (`make regression`)
-14 runs, all passing at the time of writing (`regression_summary.txt`): unit tests; system testbench at memory latency 1, 2, 4, 8, 16;
+16 runs, all passing at the time of writing (`regression_summary.txt`): unit tests; system testbench at memory latency 1, 2, 4, 8, 16;
 memory back-pressure (`mem_req_ready` held low for 1 or 3 extra cycles) at latency 1 and 4; random seeds 2, 3, 4. With back-pressure,
 latency checks use `miss = LAT + 7 + ACCEPT_DELAY`.
 
@@ -68,12 +78,12 @@ latency checks use `miss = LAT + 7 + ACCEPT_DELAY`.
   with the valid check removed. These were manual checks; the broken copies were not kept.
 
 ## Waveforms
-`make wave TEST=<name> [LAT=4]` writes `results/waveforms/<name>_lat<LAT>.vcd` with complete timing (nothing trimmed, no change to the
+`make wave TEST=<name> [LAT=4]` writes `simulation/waveforms/<name>_lat<LAT>.vcd` with complete timing (nothing trimmed, no change to the
 simulation) from `$dumpvars(0, tb_cache_controller)`: clock and reset, CPU request/address/response, hit and miss, FSM state, cache
 index and tag, memory request/ready/data, refill enable. `make wave` with no argument lists the test names; `TEST=all` dumps the whole
-suite. Open with `gtkwave results/waveforms/<file>.vcd`. VCD files are generated, not tracked in git.
+suite. Open with `gtkwave simulation/waveforms/<file>.vcd`. VCD files are generated, not tracked in git.
 
-Observed in `direct_mapped_conflict_lat4.vcd` and the miss/hit diagram `docs/diagrams/waveform_miss_then_hits.png`: a miss runs
+Observed in `direct_mapped_conflict_lat4.vcd` and the miss/hit diagram `docs/images/wave_cold_miss.png` and `docs/images/wave_repeated.png`: a miss runs
 LOOKUP -> MISS_REQ -> WAIT_MEM (LAT+4 cycles) -> REFILL -> COMPLETE with one `mem_req_valid` request and one `mem_resp_valid` pulse;
 a following hit runs LOOKUP -> COMPLETE in 2 cycles with no memory activity.
 

@@ -37,9 +37,11 @@ Storage needed: data 64 × 128 b = 8192 b, tags 64 × 22 b = 1408 b, valid 64 b.
 | `cache_tag_ram` | one 22-bit tag per line, synchronous read/write |
 | `cache_valid_ram` | 64 flip-flops (clear in one cycle on reset), synchronous read |
 | `main_memory_interface` | memory-side protocol engine: controller says *start* + address, gets *done* + 128-bit block; holds `mem_req_valid` until memory accepts |
-| `cache_controller` | FSM, hit/miss logic, response mux, seven statistics counters; instantiates all of the above |
+| `tag_comparator` | combinational: stored tag equal to request tag? |
+| `hit_miss_unit` | combinational: `hit = valid && tag_match`, `miss = !hit` (an invalid line always misses) |
+| `cache_controller` | top level: FSM, response mux, seven statistics counters; instantiates all of the above |
 
-Simulation only (`sim/`): `main_memory_model` (configurable latency, deterministic contents), `reference_memory`
+Simulation only (`testbench/`): `main_memory_model` (configurable latency, deterministic contents), `reference_memory`
 (independent golden model), testbenches. The controller never accesses the memory array; everything passes through the
 memory interface, so another memory with the same ports can replace the model.
 

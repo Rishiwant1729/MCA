@@ -31,7 +31,7 @@
 
 \begin{document}
 
-\title{Design, Verification and Interactive Visualization of a\\Direct-Mapped Cache Controller in Verilog}
+\title{Design, Verification and Performance Analysis of a\\Direct-Mapped Cache Controller in Verilog}
 
 \author{\IEEEauthorblockN{[Team member names]}
 \IEEEauthorblockA{Modern Computer Architecture (MCA) Capstone Project\\
@@ -42,11 +42,11 @@ Software-only project: Verilog, Icarus Verilog, Yosys, Python}}
 
 %=====================================================================
 \begin{abstract}
-A processor is much faster than main memory, so a small fast memory called a cache is placed between them. This project designs, tests and studies a direct-mapped cache controller written in Verilog. The cache stores 1~KB in 64 lines of 16 bytes, and a six-state finite-state machine (FSM) handles hits, misses and refills from a main-memory model with adjustable delay. The design was checked with a self-checking testbench and an independent reference model: eleven tests pass at five memory delays, and twelve of thirteen deliberately injected bugs were caught (the thirteenth cannot change any result). Measured timing is a hit time of 2 cycles and a miss penalty of $L+5$ cycles for a memory delay of $L$ cycles. Five workloads show hit rates from 99.8\% to 0\%, and the measured average memory access time matches the formula exactly. A Yosys estimate gives 635 four-input look-up tables, 487 flip-flops and 18 block RAMs. We also built a local web portal with five pages (Simulation, Cache Viewer, Waveform, Access Trace and Learn) that runs the real simulation and shows its results, waveform, access trace and cache lines. Everything reported here comes from simulation and synthesis; no hardware was used.
+A processor is much faster than main memory, so a small fast memory called a cache is placed between them. This project designs, tests and studies a direct-mapped cache controller written in Verilog. The cache stores 1~KB in 64 lines of 16 bytes. A six-state finite-state machine (FSM) handles hits, misses and refills from a main-memory model with adjustable delay, and the hit decision is built from a tag comparator and a hit/miss unit. The design was checked with unit tests for each module, a twelve-test self-checking system testbench with an independent reference model, and a regression of sixteen runs (five memory delays, memory back-pressure and four random seeds); all pass. Twelve of thirteen deliberately injected bugs were caught by the system tests (the thirteenth cannot change any result there, and a unit test catches it). Measured timing is a hit time of 2 cycles and a miss penalty of $L+5$ cycles for a memory delay of $L$ cycles. Five workloads show hit rates from 99.8\% to 0\%, and the measured average memory access time (AMAT) matches the formula exactly. A Yosys estimate gives 635 four-input look-up tables, 487 flip-flops and 18 block RAMs. Everything reported here comes from simulation and synthesis; no hardware was used.
 \end{abstract}
 
 \begin{IEEEkeywords}
-cache memory, direct-mapped cache, cache controller, finite-state machine, Verilog, verification, waveform viewer
+cache memory, direct-mapped cache, cache controller, finite-state machine, Verilog, verification, AMAT
 \end{IEEEkeywords}
 
 %=====================================================================
@@ -61,7 +61,7 @@ The objectives of this project are:
 \item to prove that it is correct with a self-checking testbench;
 \item to measure hit rate, miss rate and average memory access time (AMAT) for different access patterns;
 \item to estimate its hardware cost with logic synthesis; and
-\item to make the simulation easy to understand through a web portal that shows real waveforms and results.
+\item to document the design with diagrams, waveforms and measured results, so that every number can be reproduced with one command.
 \end{enumerate}
 The rest of the paper follows this order: Section~\ref{sec:lit} reviews related work, Section~\ref{sec:sol} describes the proposed solution, Section~\ref{sec:impl} explains implementation and verification, Section~\ref{sec:res} gives the results, Section~\ref{sec:contrib} lists the individual contributions, and Section~\ref{sec:concl} concludes.
 
@@ -82,40 +82,15 @@ Trace-driven simulators such as Dinero~IV~\cite{dinero} and full-system simulato
 \subsection{Verilog tools and verification}
 Verilog is defined by IEEE Std 1364~\cite{verilog2005}, which also defines the Value Change Dump (VCD) file format. Icarus Verilog~\cite{iverilog} simulates the design and writes VCD files, and GTKWave~\cite{gtkwave} displays them. Yosys~\cite{yosys} is an open-source synthesis tool. To check that a testbench is strong, one can inject small bugs and see whether the tests fail; this idea is called mutation testing~\cite{demillo1978}.
 
-\subsection{Waveform and circuit viewers on the web}
-WaveDrom~\cite{wavedrom} draws timing diagrams from hand-written descriptions, and DigitalJS~\cite{digitaljs} simulates synthesized circuits in a browser. The tools we reviewed either draw waveforms that the user describes, or simulate a different model. We wanted a viewer that shows the waveform of the actual testbench run, together with the FSM state, the access list and the cache lines at the same time point. Section~\ref{sec:portal} describes the portal we built for this.
-
 %=====================================================================
 \section{Proposed Solution}\label{sec:sol}
 \subsection{Overview}
-The solution has three parts: (1) the cache controller and its memory model in Verilog, (2) a verification and analysis flow, and (3) a web portal to explore the results. Fig.~\ref{fig:block} shows the hardware. The processor sends a request; the decoder splits the address; the controller reads the valid, tag and data storage and decides hit or miss; on a miss, a small memory interface fetches the block from main memory.
+The solution has two parts: (1) the cache controller and its memory model in Verilog, and (2) a verification and analysis flow that tests it, measures it and estimates its hardware cost. Fig.~\ref{fig:block} shows the hardware. The processor sends a request; the decoder splits the address; the controller reads the valid, tag and data storage and decides hit or miss; on a miss, a small memory interface fetches the block from main memory.
 
 \begin{figure*}[t]
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[blk,fill=green!10] (cpu) at (0,0) {Processor\\(testbench)};
-  \node[blk] (dec) at (4.3,2.2) {\code{address_decoder}\\tag / index / offset};
-  \node[blk,fill=orange!15,minimum width=3cm,minimum height=1.5cm] (fsm) at (4.3,-0.5) {\code{cache_controller} FSM\\hit logic, response\\statistics counters};
-  \node[blk] (val) at (9.2,2.0) {valid bits, 64 flip-flops};
-  \node[blk] (tag) at (9.2,0.8) {tag RAM, $64\times22$ b};
-  \node[blk] (dat) at (9.2,-0.4) {data RAM, $64\times128$ b};
-  \node[draw,rounded corners=3pt,fit=(val)(tag)(dat),inner sep=6pt] (arr) {};
-  \node[font=\tiny\bfseries,anchor=south east] at (arr.north east) {storage arrays};
-  \node[blk] (mif) at (9.2,-2.8) {\code{main_memory_interface}\\start / done};
-  \node[blk,fill=red!10] (mem) at (14.2,-2.8) {main memory model\\(latency $L$)};
-  \node[draw,dashed,rounded corners=4pt,fit=(dec)(fsm)(arr)(mif),inner sep=9pt] (box) {};
-  \node[font=\scriptsize\bfseries,anchor=south west] at (box.north west) {cache controller (Verilog RTL)};
-  \draw[ar] (cpu.north) |- node[lb,pos=0.75]{request address} (dec.west);
-  \draw[ar] ([yshift=0.15cm]cpu.east) -- node[lb,pos=0.4]{request} ([yshift=0.15cm]fsm.west);
-  \draw[ar] ([yshift=-0.15cm]fsm.west) -- node[lb,pos=0.6]{response} ([yshift=-0.15cm]cpu.east);
-  \draw[ar] (dec.east) -- node[lb,pos=0.5]{index} (arr.west |- dec.east);
-  \draw[ar] ([yshift=-0.55cm]arr.west) -- node[lb,pos=0.5,above]{valid, tag, line} (fsm.east |- 0,-0.1);
-  \draw[ar] (fsm.south) |- node[lb,pos=0.7]{start, block address} ([yshift=0.15cm]mif.west);
-  \draw[ar] ([yshift=-0.15cm]mif.west) -| node[lb,pos=0.2,below]{done, block} ([xshift=0.8cm]fsm.south);
-  \draw[ar] (mif.north) -- node[lb,right]{refill: data, tag, valid} (arr.south);
-  \draw[ar,<->] (mif.east) -- node[lb,pos=0.5,above]{request / block} (mem.west);
-\end{tikzpicture}
-\caption{Block diagram of the proposed cache controller. The address decoder gives the index to the storage arrays; the FSM compares the stored tag and valid bit; a refill flows from main memory through the memory interface into the arrays.}\label{fig:block}
+\includegraphics[width=0.9\textwidth]{block_diagram.pdf}
+\caption{Block diagram of the proposed cache controller. The address decoder gives the index to the storage arrays; the tag comparator and the hit/miss unit decide hit or miss; the FSM controls refills, which flow from main memory through the memory interface into the arrays.}\label{fig:block}
 \end{figure*}
 
 \subsection{Cache parameters}
@@ -205,24 +180,7 @@ A six-state FSM (Fig.~\ref{fig:fsm}, Table~\ref{tab:fsm}) sequences the work. \t
 
 \begin{figure*}[t]
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[st] (idle) at (0,0) {IDLE};
-  \node[st] (look) at (3.6,0) {LOOKUP};
-  \node[st] (comp) at (11.6,0) {COMPLETE};
-  \node[st] (mreq) at (3.6,-2.9) {MISS\_\\REQ};
-  \node[st] (wait) at (7.6,-2.9) {WAIT\_\\MEM};
-  \node[st] (refl) at (11.6,-2.9) {REFILL};
-  \draw[ar] (idle) -- node[lb,above]{request accepted} (look);
-  \draw[ar] (look) -- node[lb,above]{hit} (comp);
-  \draw[ar] (look) -- node[lb,left]{miss} (mreq);
-  \draw[ar] (mreq) -- node[lb,above]{always} (wait);
-  \draw[ar] (wait) -- node[lb,above]{memory done} (refl);
-  \draw[ar] (refl) -- node[lb,right]{always} (comp);
-  \draw[ar] (wait) to[out=-60,in=-120,looseness=7] node[lb,below]{not done} (wait);
-  \draw[ar] (comp.north) to[out=110,in=70,looseness=0.7] node[lb,above]{always} (idle.north);
-  \draw[ar,dashed] (idle.south) -- ++(0,-0.9) -| node[lb,pos=0.2,below]{bad request (error answer)} (comp.south west);
-  \node[font=\tiny,align=left,anchor=north west] at (-0.9,-3.4) {\code{req_ready} = 1 only in IDLE\\\code{resp_valid} = 1 only in COMPLETE};
-\end{tikzpicture}
+\includegraphics[width=0.85\textwidth]{controller_fsm.pdf}
 \caption{State diagram of the controller. The dashed arrow is the shortcut for a misaligned, out-of-range or write request.}\label{fig:fsm}
 \end{figure*}
 
@@ -261,69 +219,35 @@ where $m$ is the miss rate. If a hit rate $h$ and miss latency $t_m$ are used in
 \subsection{Write policy and scope}
 This version is a \emph{read-only} cache; write requests are answered with an error. The planned extension is write-through with write-allocate. The data RAM already has a byte-mask port for it, but no write behavior is claimed.
 
-\subsection{Interactive simulation portal}\label{sec:portal}
-The portal is a local web application with two parts (Fig.~\ref{fig:parch}). The browser only shows data. A small Python server runs the simulation with fixed, approved commands, keeps the original VCD file, and answers the browser with small pieces of data.
-
-\begin{figure*}[t]
-\centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[blk] (ui) at (0,0) {Browser pages:\\Simulation, Cache Viewer,\\Waveform, Access Trace};
-  \node[blk,fill=orange!15] (val) at (4.6,0) {Check inputs\\(scenario, latency\\from fixed lists)};
-  \node[blk] (run) at (8.6,0) {\code{iverilog} and \code{vvp}\\fixed commands};
-  \node[blk] (vcd) at (12.6,0) {run folder:\\\code{wave.vcd}, log,\\metadata};
-  \node[blk] (idx) at (12.6,-2.3) {VCD index and\\access-trace builder};
-  \node[blk,fill=gray!15] (cfg) at (4.6,-4.2) {RTL configuration\\(parsed from\\\code{cache_controller.v})};
-  \node[blk,fill=red!10] (gtk) at (12.6,2.1) {GTKWave\\(original VCD)};
-  \draw[ar] (ui) -- node[lb,above]{run request} (val);
-  \draw[ar] (val) -- (run);
-  \draw[ar] (run) -- (vcd);
-  \draw[ar] (vcd) -- (idx);
-  \draw[ar] (vcd) -- node[lb,right]{download} (gtk);
-  \draw[ar] (idx.west) -- node[lb,above]{waveform windows, access trace, cache lines (JSON)} (ui.south |- idx.west) -- (ui.south);
-  \draw[ar] (cfg.north) -- node[lb,right]{configuration, FSM names} ++(0,1.0);
-\end{tikzpicture}
-\caption{Portal architecture. All displayed data comes from the VCD of the selected run or from the RTL source; the browser never sends a command or a file name.}\label{fig:parch}
-\end{figure*}
-
-The four pages share one selected run, so a student never compares data from different simulations:
-\begin{itemize}
-\item \textbf{Simulation:} choose a scenario and memory delay, run it, and see the results cards (accesses, hits, misses, hit rate, AMAT), an address decoder, the FSM path, a cache snapshot, a small waveform and a trace excerpt.
-\item \textbf{Cache Viewer:} the 64 lines with valid bit, tag and data bytes, with search and filters.
-\item \textbf{Waveform:} three modes. \emph{Single Access} (the default) zooms to one access using its real accept and response times and lists its FSM transitions and memory operations; \emph{Overview} shows the whole timeline with key signals; \emph{Full Waveform} offers every recorded signal. Zoom, pan, a movable cursor, hex/binary/decimal/raw-bit display, and download of the original VCD.
-\item \textbf{Access Trace:} every access with cycle, address, tag, index, offset, hit or miss and FSM transition, with filters, export and a hit/miss sequence.
-\end{itemize}
-The access trace is rebuilt from the VCD: an access is accepted at a clock edge where \code{req_valid} and \code{req_ready} were both 1, and its answer is the next edge where \code{resp_valid} was 1. A VCD cannot store RAM contents, so cache lines are rebuilt from the dumped refill and reset signals and checked against the memory image. Section~\ref{sec:res} shows screenshots.
-
 \subsection{Tool flow}
 \begin{figure*}[t]
 \centering
 \begin{tikzpicture}[x=1cm,y=1cm]
   \node[blk,fill=green!10] (rtl) at (0,0) {Verilog RTL\\(\code{rtl/})};
-  \node[blk,fill=orange!15] (tb) at (0,-1.6) {testbench, memory\\model, reference\\(\code{sim/})};
+  \node[blk,fill=orange!15] (tb) at (0,-1.6) {testbench, memory\\model, reference\\(\code{testbench/})};
   \node[blk] (sim) at (4,-0.8) {Icarus Verilog\\\code{iverilog}, \code{vvp}};
   \node[blk] (vcd) at (8,0.2) {VCD waveform};
   \node[blk] (log) at (8,-1.8) {log: PASS / FAIL\\and counters};
   \node[blk,fill=red!10] (gtk) at (12,1.2) {GTKWave};
-  \node[blk,fill=red!10] (por) at (12,-0.2) {web portal};
   \node[blk] (py) at (12,-1.8) {Python analysis\\CSV tables, plots};
   \node[blk] (yos) at (4,1.5) {Yosys\\synthesis};
   \node[blk] (rep) at (8,1.9) {resource\\estimates};
   \draw[ar] (rtl.east) -- (sim.north west |- rtl.east) -- (sim.north west);
   \draw[ar] (tb.east) -- (sim.south west |- tb.east) -- (sim.south west);
   \draw[ar] (sim) -- (vcd.west); \draw[ar] (sim) -- (log.west);
-  \draw[ar] (vcd.east) -- (gtk.west); \draw[ar] (vcd.east) -- (por.west);
+  \draw[ar] (vcd.east) -- (gtk.west);
   \draw[ar] (log.east) -- (py.west);
   \draw[ar] (rtl.north) |- (yos.west); \draw[ar] (yos) -- (rep);
 \end{tikzpicture}
 \caption{Overall tool flow of the project.}\label{fig:flow2}
 \end{figure*}
-Fig.~\ref{fig:flow2} shows how the parts connect. Each step has one command: \code{make compile}, \code{make test}, \code{make regression}, \code{make wave}, \code{make perf}, \code{make synth}, and the optional \code{make portal} and \code{make verify-portal}.
+Fig.~\ref{fig:flow2} shows how the parts connect. Each step has one command: \code{make compile}, \code{make test}, \code{make regression}, \code{make wave}, \code{make perf}, \code{make synth}, \code{make diagrams}, \code{make waveforms} and \code{make report}.
 
 %=====================================================================
 \section{Implementation and Verification}\label{sec:impl}
 \subsection{Modules}
 \begin{table}[t]
-\caption{Verilog modules (354 lines of RTL in total)}\label{tab:modules}
+\caption{Verilog modules (\code{rtl/})}\label{tab:modules}
 \centering\small
 \begin{tabular}{@{}p{0.43\columnwidth}p{0.49\columnwidth}@{}}
 \toprule
@@ -333,8 +257,10 @@ Module & Job\\
 \code{cache_data_ram} & 16 byte-lane RAMs, byte mask\\
 \code{cache_tag_ram} & one 22-bit tag per line\\
 \code{cache_valid_ram} & 64 valid flip-flops, reset clears all\\
+\code{tag_comparator} & stored tag equal to request tag?\\
+\code{hit_miss_unit} & hit = valid and tag match\\
 \code{main_memory_interface} & start/done protocol to memory\\
-\code{cache_controller} & FSM, hit logic, 7 counters\\
+\code{cache_controller} & top level: FSM, response, 7 counters\\
 \midrule
 \multicolumn{2}{@{}l}{\emph{Simulation only:}}\\
 \code{main_memory_model} & memory with latency $L$\\
@@ -370,10 +296,25 @@ Two independent checks run on every simulation. A \emph{monitor} watches the pro
 \end{tabular}
 \end{table}
 
-All twelve tests pass at $L=1,2,4,8,16$, with the memory holding \texttt{mem\_req\_ready} low for 1 or 3 extra cycles (back-pressure), and with three further random seeds (\code{make regression}: 14 of 14 runs). A memory-side protocol checker also runs in every simulation: the request stays valid with a stable, block-aligned address until accepted; no request is accepted while a read is outstanding; a response only follows a request and lasts one cycle. Two unit tests also pass (address decoder against bit slicing for 20{,}000 random addresses, and the storage arrays).
+All twelve tests pass at $L=1,2,4,8,16$, with the memory holding \texttt{mem\_req\_ready} low for 1 or 3 extra cycles (back-pressure), and with three further random seeds (\code{make regression}: 16 of 16 runs, including the four unit tests). A memory-side protocol checker also runs in every simulation: the request stays valid with a stable, block-aligned address until accepted; no request is accepted while a read is outstanding; a response only follows a request and lasts one cycle. Each module also has its own unit testbench (Table~\ref{tab:unit}), and all of them pass.
+
+\begin{table}[t]
+\caption{Unit tests (one testbench per module)}\label{tab:unit}
+\centering\small
+\begin{tabular}{@{}p{0.34\columnwidth}p{0.4\columnwidth}r@{}}
+\toprule
+Testbench & Checks & Count\\
+\midrule
+\code{tb_address_decoder} & bit slicing, 2 geometries & 40{,}005\\
+\code{tb_tag_comparator} & exhaustive, bit flips, random & 5{,}091\\
+\code{tb_hit_miss_unit} & truth table & 8\\
+\code{tb_storage} & valid, tag, data arrays & 74\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Does the testbench catch bugs?}
-A testbench that never fails proves little, so thirteen bugs were injected one at a time into copies of the RTL: ignoring the valid bit, comparing only part of the tag, a wrong word select, refilling the wrong line (three variants), not clearing valid bits on reset, returning stale data on a miss, a wrong hit counter, not waiting for memory, never writing the tag RAM, an unaligned block address, and ignoring tag bit 21. The testbench failed for twelve of them. The surviving one cannot matter: memory is 64~KB, so address bit 31 is never 1. An early testbench missed the wrong-line refills because the driver kept the address steady after acceptance; it now changes the address after acceptance. This follows the idea of mutation testing~\cite{demillo1978}.
+A testbench that never fails proves little, so thirteen bugs were injected one at a time into copies of the RTL: ignoring the valid bit, comparing only part of the tag, a wrong word select, refilling the wrong line (three variants), not clearing valid bits on reset, returning stale data on a miss, a wrong hit counter, not waiting for memory, never writing the tag RAM, an unaligned block address, and ignoring tag bit 21. The testbench failed for twelve of them. The surviving one cannot matter in the system tests: memory is 64~KB, so address bit 31 is never 1 (the tag comparator unit test does catch it). An early testbench missed the wrong-line refills because the driver kept the address steady after acceptance; it now changes the address after acceptance. This follows the idea of mutation testing~\cite{demillo1978}.
 
 %=====================================================================
 \section{Results and Discussion}\label{sec:res}
@@ -385,6 +326,8 @@ Each figure below is drawn from the VCD of a real run. The clock period is 10~ns
 \textbf{Repeated access.} Fig.~\ref{fig:w-rep} shows one miss and then two hits of 2 cycles each, with no memory activity (temporal locality).
 
 \textbf{Direct-mapped conflict.} Addresses \texttt{0x0} and \texttt{0x400} share line 0. In Fig.~\ref{fig:w-conf} every access is a miss and the memory address alternates between them, although 63 other lines are unused. A 2-way cache would keep both blocks.
+
+\textbf{Conflict example.} Fig.~\ref{fig:w-c12} repeats the classic example: addresses 100, 1124 and 100 are three misses because 100 and 1124 share line 6 (tags 0 and 1), and then address 104 hits because it lies in the same 16-byte block as 100.
 
 \textbf{Sequential access.} In Fig.~\ref{fig:w-seq} one miss brings in a block, and the next three words hit (spatial locality).
 
@@ -399,6 +342,7 @@ Each figure below is drawn from the VCD of a real run. The clock period is 10~ns
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_cold_miss.pdf}\caption{Cold miss at \texttt{0x44}: five states, one memory request, 11 cycles.}\label{fig:w-cold}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_repeated.pdf}\caption{Repeated access: one miss, then two 2-cycle hits.}\label{fig:w-rep}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_conflict.pdf}\caption{Conflict: addresses 0 and 1024 evict each other, so every access misses.}\label{fig:w-conf}\end{figure*}
+\begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_conflict_100_1124.pdf}\caption{Conflict example: 100, 1124 and 100 miss; 104 hits.}\label{fig:w-c12}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_sequential.pdf}\caption{Sequential words: one miss per four-word block.}\label{fig:w-seq}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_latency.pdf}\caption{The same miss with $L=1$ (top) and $L=16$ (bottom).}\label{fig:w-lat}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.92\textwidth]{wave_handshake.pdf}\caption{Continuous requests: one acceptance and one response per request.}\label{fig:w-hand}\end{figure*}
@@ -475,49 +419,37 @@ Resource & Count\\
 Flip-flops & 487\\
 4~Kbit block RAMs & 18\\
 \midrule
-Gates, no RAM blocks (generic flow) & 26{,}160\\
+Gates, no RAM blocks (generic flow) & 26{,}162\\
 Flip-flops, no RAM blocks & 10{,}237\\
 \bottomrule
 \end{tabular}
 \end{table}
 All 17 storage arrays map to block RAM. Without block RAM the arrays become about 9{,}600 flip-flops, which shows why this matters. Block RAM is under-used (73{,}728 bits of RAM for about 9{,}600 stored bits) because each byte lane takes a whole block. The seven statistics counters use about half of the flip-flops, so a final design should make them optional. No timing analysis was done.
 
-\subsection{Portal screenshots}
-Figs.~\ref{fig:ui-sim}--\ref{fig:ui-trace} show the four portal pages from a real run (the full test suite, memory delay 4). The numbers on them are the measured values of that run.
-
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth,trim=0 175 0 0,clip]{ui_simulation.png}\caption{Simulation page: controls, results cards, address decoder, FSM with the recorded path (numbers show the order), cache snapshot, mini waveform and trace excerpt.}\label{fig:ui-sim}\end{figure*}
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_cache.png}\caption{Cache Viewer: 64 lines with valid bit, tag and data bytes; the selected line was just refilled by access \#5.}\label{fig:ui-cache}\end{figure*}
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_waveform.png}\caption{Waveform page (Single Access mode, the default): key signals with their value at the cursor, the selected access, and its FSM path and events.}\label{fig:ui-wave}\end{figure*}
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_trace.png}\caption{Access Trace page: every access with its result and FSM transition, summary, details and hit/miss sequence.}\label{fig:ui-trace}\end{figure*}
-
-\subsection{Are the portal data real?}
-A verification script runs seven real simulations through the same code as the portal and checks that: the VCD was written by Icarus Verilog and matches its SHA-256 value; the indexed signal values equal an independent re-parse of the VCD; the access trace equals a second, independent derivation (time, address and hit/miss/error of every access); the trace totals equal the counters printed by the simulator; hit, miss and error latencies match the design timing; reconstructed cache lines match memory; and exports, asynchronous runs and deletion work. Bad scenarios, delays, malformed or oversized requests, path tricks and unknown run identifiers are rejected. All checks pass.
-
 %=====================================================================
 \section{Individual Contributions}\label{sec:contrib}
-Table~\ref{tab:contrib} lists the work packages and who did them. Replace the bracketed names with the team members' names.
+Table~\ref{tab:contrib} lists the work packages and who did them. The bracketed names are placeholders for the team members' names.
 
 \begin{table}[t]
 \caption{Individual contributions}\label{tab:contrib}
 \centering\small
 \begin{tabular}{@{}p{0.27\columnwidth}p{0.62\columnwidth}@{}}
 \toprule
-Member & Work done\\
+Member & Responsibilities\\
 \midrule
-{[Member 1]} & Architecture and parameters; address decoder; tag, valid and data storage; cache controller FSM and hit logic\\
-{[Member 2]} & Memory interface and memory model; reference model; self-checking testbench with twelve tests; bug-injection check\\
-{[Member 3]} & Workloads and Python analysis; AMAT study; Yosys synthesis and resource estimate\\
-{[Member 4]} & Portal backend (safe runs, VCD index, access trace) and portal verification script\\
-{[Member 5]} & Portal user interface (four pages, SVG icons), diagrams, screenshots and this report\\
+{[Member 1]} & Architecture and signal definitions; cache controller FSM; integration of all modules; system testbench\\
+{[Member 2]} & Address decoder; tag, valid and data storage; tag comparator and hit/miss unit; their unit tests\\
+{[Member 3]} & Memory interface and memory model; reference model; verification, regression, bug-injection check, waveforms\\
+{[Member 4]} & Workloads and AMAT analysis; Yosys synthesis; diagrams, literature review, README and this report\\
 \bottomrule
 \end{tabular}
 \end{table}
 
 %=====================================================================
 \section{Conclusion and Future Work}\label{sec:concl}
-We designed a parameterized direct-mapped cache controller in Verilog and showed with simulation that it works: all tests pass, injected bugs are caught, hit time is 2 cycles and the miss penalty is $L+5$ cycles. The measured performance matches the AMAT formula and simple models of each access pattern. The web portal lets a reader run a scenario and see the real waveform, FSM path, access trace and cache lines in one place, while the original VCD stays available for GTKWave.
+We designed a parameterized direct-mapped cache controller in Verilog and showed with simulation that it works: all tests pass, injected bugs are caught, hit time is 2 cycles and the miss penalty is $L+5$ cycles. The measured performance matches the AMAT formula and simple models of each access pattern. Every step (tests, regression, waveforms, performance study, synthesis, diagrams and this report) runs from one \code{make} command, and the VCD files open in GTKWave.
 
-The main limits are: the cache is read-only and handles one request at a time; the memory model is always ready; traces are synthetic; synthesis numbers are estimates without timing; and cache contents in the portal are rebuilt from dumped signals. Future work is write-through with write-allocate, a 2-way comparison to remove conflict misses, a non-blocking design~\cite{kroft1981}, optional counters, timing with place-and-route, and traces from real programs.
+The main limits are: the cache is read-only and handles one request at a time; the memory model is always ready; traces are synthetic; and synthesis numbers are estimates without timing. Future work is write-through with write-allocate, a 2-way comparison to remove conflict misses, a non-blocking design~\cite{kroft1981}, optional counters, timing with place-and-route, and traces from real programs.
 
 %=====================================================================
 \begin{thebibliography}{99}
@@ -536,8 +468,6 @@ The main limits are: the cache is read-only and handles one request at a time; t
 \bibitem{gtkwave} ``GTKWave waveform viewer.'' [Online]. Available: \url{https://gtkwave.sourceforge.net/}
 \bibitem{yosys} C. Wolf, J. Glaser, and J. Kepler, ``Yosys -- a free Verilog synthesis suite,'' in \emph{Proc. 21st Austrian Workshop on Microelectronics (Austrochip)}, 2013.
 \bibitem{demillo1978} R. A. DeMillo, R. J. Lipton, and F. G. Sayward, ``Hints on test data selection: Help for the practicing programmer,'' \emph{Computer}, vol.~11, no.~4, pp. 34--41, 1978.
-\bibitem{wavedrom} ``WaveDrom: digital timing diagram rendering engine.'' [Online]. Available: \url{https://wavedrom.com/}
-\bibitem{digitaljs} M. Materzok, ``DigitalJS: digital circuit simulator in JavaScript.'' [Online]. Available: \url{https://github.com/tilk/digitaljs}
 \end{thebibliography}
 
 \end{document}

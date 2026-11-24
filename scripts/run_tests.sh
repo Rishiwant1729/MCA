@@ -5,7 +5,7 @@ set -u
 source "$(dirname "$0")/common.sh"
 L=${1:-4}; status=0
 scripts/compile.sh > /dev/null 2>&1 || { echo "compile failed; run: make compile"; exit 1; }
-for u in address_decoder storage; do
+for u in "${UNITS[@]}"; do
   vvp -n $LOGS/tb_$u.vvp > $LOGS/unit_$u.log; rc=$?
   grep "tb_$u:" $LOGS/unit_$u.log; [ $rc -ne 0 ] && status=1
 done

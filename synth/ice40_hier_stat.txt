@@ -1,0 +1,168 @@
+
+12. Printing statistics.
+
+=== $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      332 wires
+     1119 wire bits
+      332 public wires
+     1119 public wire bits
+        8 ports
+      287 port bits
+      473 cells
+      150   SB_DFF
+      144   SB_DFFE
+      163   SB_LUT4
+       16   SB_RAM40_4K
+
+=== $paramod$c8f835f0c62982cd0de692153653414b1a004fec\main_memory_interface ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       22 wires
+      377 wire bits
+       22 public wires
+      377 public wire bits
+       11 ports
+      327 port bits
+      173 cells
+        3   SB_DFF
+      160   SB_DFFESR
+        1   SB_DFFSR
+        9   SB_LUT4
+
+=== $paramod$cccfb2753cc081460739e2a079a55d762f5af76a\cache_tag_ram ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       61 wires
+      201 wire bits
+       61 public wires
+      201 public wire bits
+        7 ports
+       59 port bits
+       85 cells
+       29   SB_DFF
+       23   SB_DFFE
+       31   SB_LUT4
+        2   SB_RAM40_4K
+
+=== $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder ===
+
+        +----------Local Count, excluding submodules.
+        | 
+        5 wires
+       96 wire bits
+        5 public wires
+       96 public wire bits
+        5 ports
+       96 port bits
+
+=== $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000 ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      162 wires
+      432 wire bits
+      162 public wires
+      432 public wire bits
+        8 ports
+       18 port bits
+      254 cells
+        5   SB_CARRY
+       65   SB_DFFESR
+      184   SB_LUT4
+
+=== $paramod\tag_comparator\TAG_W=s32'00000000000000000000000000010110 ===
+
+        +----------Local Count, excluding submodules.
+        | 
+        9 wires
+       69 wire bits
+        9 public wires
+       69 public wire bits
+        3 ports
+       45 port bits
+       21 cells
+       21   SB_LUT4
+
+=== cache_controller ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      578 wires
+     1683 wire bits
+      578 public wires
+     1683 public wire bits
+       24 ports
+      495 port bits
+      926 cells
+      225   SB_CARRY
+        6   SB_DFF
+      226   SB_DFFESR
+       32   SB_DFFSR
+      437   SB_LUT4
+        8 submodules
+        1   $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram
+        1   $paramod$c8f835f0c62982cd0de692153653414b1a004fec\main_memory_interface
+        1   $paramod$cccfb2753cc081460739e2a079a55d762f5af76a\cache_tag_ram
+        2   $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder
+        1   $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000
+        1   $paramod\tag_comparator\TAG_W=s32'00000000000000000000000000010110
+        1   hit_miss_unit
+
+=== hit_miss_unit ===
+
+        +----------Local Count, excluding submodules.
+        | 
+        4 wires
+        4 wire bits
+        4 public wires
+        4 public wire bits
+        4 ports
+        4 port bits
+        2 cells
+        2   SB_LUT4
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+     1934 cache_controller
+      473 $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram
+      173 $paramod$c8f835f0c62982cd0de692153653414b1a004fec\main_memory_interface
+       85 $paramod$cccfb2753cc081460739e2a079a55d762f5af76a\cache_tag_ram
+      254 $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000
+       21 $paramod\tag_comparator\TAG_W=s32'00000000000000000000000000010110
+        2 hit_miss_unit
+
+        +----------Count including submodules.
+        | 
+     1178 wires
+     4077 wire bits
+     1178 public wires
+     4077 public wire bits
+       75 ports
+     1427 port bits
+        - memories
+        - memory bits
+        - processes
+     1934 cells
+      230   SB_CARRY
+      188   SB_DFF
+      167   SB_DFFE
+      451   SB_DFFESR
+       33   SB_DFFSR
+      847   SB_LUT4
+       18   SB_RAM40_4K
+        8 submodules
+        1   $paramod$835e3a9023cc04f25fdd9a1cdbc0b9a7d999e8ed\cache_data_ram
+        1   $paramod$c8f835f0c62982cd0de692153653414b1a004fec\main_memory_interface
+        1   $paramod$cccfb2753cc081460739e2a079a55d762f5af76a\cache_tag_ram
+        2   $paramod$d7ae350b4ec72a06c32509d64e7ad037be9fcb7c\address_decoder
+        1   $paramod\cache_valid_ram\NUM_LINES=s32'00000000000000000000000001000000
+        1   $paramod\tag_comparator\TAG_W=s32'00000000000000000000000000010110
+        1   hit_miss_unit
+

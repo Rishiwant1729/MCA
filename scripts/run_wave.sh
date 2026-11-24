@@ -4,7 +4,7 @@
 #   <test>: a name (cold_miss, repeated_access, same_block_accesses, direct_mapped_conflict, different_cache_lines,
 #           sequential_access, reset, memory_latency, request_handshake, randomized, boundary_and_errors,
 #           conflict_100_1124_104), a number 1-12, an alias (conflict_miss), or "all" (whole suite, large file).
-# Output: results/waveforms/<test>_lat<LAT>.vcd and results/simulation_logs/wave_<test>_lat<LAT>.log
+# Output: simulation/waveforms/<test>_lat<LAT>.vcd and simulation/logs/wave_<test>_lat<LAT>.log
 set -u
 source "$(dirname "$0")/common.sh"
 T=${1:-}; L=${2:-4}; D=${3:-0}

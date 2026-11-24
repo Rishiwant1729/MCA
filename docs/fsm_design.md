@@ -1,13 +1,13 @@
 # Controller FSM
 
-![FSM](diagrams/fsm.png)
+![FSM](../diagrams/controller_fsm.png)
 
 Six states, one request at a time. State is a registered 3-bit value; next state is combinational (`cache_controller.v`).
 
 | State | Outputs / actions | Transition |
 |---|---|---|
 | **IDLE** | `req_ready=1`. On `req_valid` (the accept edge): latch address, set `err_q` if the request is bad, start reading data/tag/valid RAMs with the live index. | accept and request OK → LOOKUP; accept and bad (misaligned, ≥ `MEM_BYTES`, or write) → COMPLETE; no accept → IDLE |
-| **LOOKUP** | RAM outputs are valid. `hit = valid && stored_tag == request_tag`. Counts hit or miss. Records `hit_q`. | hit → COMPLETE; miss → MISS_REQ |
+| **LOOKUP** | RAM outputs are valid. `hit = valid && stored_tag == request_tag` (from `tag_comparator` and `hit_miss_unit`). Counts hit or miss. Records `hit_q`. | hit → COMPLETE; miss → MISS_REQ |
 | **MISS_REQ** | Pulses `start` to `main_memory_interface` with the block-aligned address. Counts one memory read. | always → WAIT_MEM |
 | **WAIT_MEM** | Interface requests the block and waits for `mem_resp_valid`. Counts memory-wait cycles. | `mem_done` → REFILL; else stay |
 | **REFILL** | Writes the 128-bit block to the data RAM, the tag to the tag RAM, and sets the valid bit (all at index of the latched address). | always → COMPLETE |

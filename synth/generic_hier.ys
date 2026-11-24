@@ -1,7 +1,7 @@
 # Technology-independent gates, hierarchy kept (per-module statistics). Memories become flip-flops + muxes.
-# Run from the repository root:  yosys -l results/synthesis/generic.log -s synth/generic_hier.ys   (or: make synth)
-read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/main_memory_interface.v rtl/cache_controller.v
+# Run from the repository root:  yosys -l synth/generic.log -s synth/generic_hier.ys   (or: make synth)
+read_verilog -sv rtl/address_decoder.v rtl/cache_data_ram.v rtl/cache_tag_ram.v rtl/cache_valid_ram.v rtl/tag_comparator.v rtl/hit_miss_unit.v rtl/main_memory_interface.v rtl/cache_controller.v
 hierarchy -check -top cache_controller
 synth -top cache_controller
 check -assert
-tee -o results/synthesis/generic_stat.txt stat
+tee -o synth/generic_stat.txt stat

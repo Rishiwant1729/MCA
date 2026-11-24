@@ -5,15 +5,15 @@ __pycache__/
 *.vvp
 
 # generated simulation output (reproduce with: make regression / make wave TEST=...)
-results/waveforms/*.vcd
-results/simulation_logs/*.log
+simulation/waveforms/*.vcd
+simulation/logs/*.log
 # tb_cache_lat4.log is kept as verification evidence (expected vs actual per test)
-!results/simulation_logs/tb_cache_lat4.log
-results/portal_runs/
+!simulation/logs/tb_cache_lat4.log
+!simulation/logs/regression_summary.txt
 
 # generated synthesis output (reproduce with: make synth); the *_stat.txt reports and SUMMARY.md stay tracked
-results/synthesis/*.json
-results/synthesis/*.log
+synth/*.json
+synth/*.log
 
 # LaTeX build files (the report PDF and sources stay tracked)
 report/*.aux
