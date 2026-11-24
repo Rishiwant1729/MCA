@@ -8,12 +8,12 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const P = "tb_cache_controller.";
 const PAGES = [["simulation", "Simulation", "play"], ["cache", "Cache Viewer", "layers"], ["waveform", "Waveform", "activity"],
-  ["trace", "Access Trace", "list"], ["learn", "Learn", "book"]];
+  ["trace", "Access Trace", "list"]];
 
 const App = {
   page: "simulation", params: {}, cfg: null, scen: null, runs: [], run: null, info: null, tr: null,
   sel: { acc: null, line: null }, offline: false, loadSeq: 0, lines: new Map(), events: [], busy: false,
-  wv: { cursor: 0, t0: null, t1: null, radix: "hex", visible: null, collapsed: new Set() },
+  wv: { cursor: 0, t0: null, t1: null, radix: "hex", mode: null, vis: null, collapsed: new Set(), fullView: null },
   form: { scenario: "full_suite", latency: 4 },
   listeners: [],
 };
@@ -121,7 +121,7 @@ async function loadRun(id) {
   const changed = !App.run || App.run.run_id !== id;
   App.run = meta; App.runError = null;
   if (SC_OK(meta)) App.form = { scenario: meta.scenario, latency: meta.latency };
-  if (changed) { App.info = null; App.tr = null; App.events = []; App.lines.clear(); App.wv.t0 = App.wv.t1 = null; App.wv.visible = null; }
+  if (changed) { App.info = null; App.tr = null; App.events = []; App.lines.clear(); App.wv.t0 = App.wv.t1 = null; App.wv.vis = null; App.wv.mode = null; App.wv.fullView = null; }
   try { localStorage.setItem("cachePortal.run", id); } catch (e) { /* ignore */ }
   notify("run");
   while (ACTIVE.has(App.run.status)) {            // simulation still running: poll its phase
@@ -194,7 +194,7 @@ function sigColor(sig) {
 }
 class Wave {
   constructor(canvas, o = {}) {
-    Object.assign(this, { canvas, view: App.wv, rowH: 28, grpH: 24, ruler: 30, interactive: true, rows: [], data: {}, win: null, ctl: null, timer: null, onCursor: null, onView: null, dead: false }, o);
+    Object.assign(this, { canvas, view: App.wv, rowH: 28, grpH: 24, ruler: 30, interactive: true, rows: [], data: {}, win: null, ctl: null, timer: null, onCursor: null, onView: null, onSelect: null, selectDrag: false, overlay: null, ticks: false, band: null, dead: false }, o);
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(canvas.parentElement);
     if (this.interactive) this.bindEvents();
@@ -251,20 +251,25 @@ class Wave {
     const c = this.canvas; c.tabIndex = 0; let drag = null;
     c.addEventListener("mousedown", (e) => {
       const r = c.getBoundingClientRect();
-      drag = { x0: e.clientX, a: this.t0, b: this.t1, moved: false, ruler: e.clientY - r.top < this.ruler };
+      drag = { x0: e.clientX, a: this.t0, b: this.t1, moved: false, ruler: e.clientY - r.top < this.ruler, sel: false };
+      drag.sel = !drag.ruler && (this.selectDrag || e.shiftKey);
       if (drag.ruler) this.setCursor(this.tOf(e.clientX - r.left));
       c.focus();
     });
     this._mm = (e) => {
       if (!drag) return; const r = c.getBoundingClientRect();
       if (drag.ruler) { this.setCursor(this.tOf(e.clientX - r.left)); return; }
+      if (drag.sel) { if (Math.abs(e.clientX - drag.x0) > 3) drag.moved = true; if (drag.moved) { this.band = [this.tOf(drag.x0 - r.left), this.tOf(e.clientX - r.left)]; this.draw(); c.style.cursor = "col-resize"; } return; }
       const dx = e.clientX - drag.x0; if (Math.abs(dx) > 3) drag.moved = true;
       if (drag.moved) { const dt = -dx * (drag.b - drag.a) / r.width; this.setView(drag.a + dt, drag.b + dt); c.style.cursor = "grabbing"; }
     };
     this._mu = (e) => {
       if (!drag) return; const r = c.getBoundingClientRect();
-      if (!drag.moved && !drag.ruler) this.setCursor(this.tOf(e.clientX - r.left));
-      drag = null; c.style.cursor = "crosshair";
+      if (drag.sel && drag.moved && this.band) {
+        const [p, q] = this.band, a = Math.min(p, q), b = Math.max(p, q); this.band = null;
+        if (this.onSelect) this.onSelect(a, b); else this.setView(a, b);
+      } else if (!drag.moved && !drag.ruler) this.setCursor(this.tOf(e.clientX - r.left));
+      this.band = null; drag = null; c.style.cursor = "crosshair"; this.draw();
     };
     window.addEventListener("mousemove", this._mm); window.addEventListener("mouseup", this._mu);
     c.addEventListener("wheel", (e) => {
@@ -303,6 +308,13 @@ class Wave {
     g.strokeStyle = "rgba(54,62,132,.9)"; g.beginPath(); g.moveTo(0, this.ruler - .5); g.lineTo(W, this.ruler - .5); g.stroke();
     y = this.ruler;
     for (const r of this.rows) { if (r.type === "grp") { y += this.grpH; continue; } this.drawSig(g, r.sig, y, W); y += this.rowH; }
+    if (this.ticks) this.drawTicks(g, W);
+    this.overlay?.(g, W, H);
+    if (this.band) {
+      const bx0 = this.xOf(Math.min(...this.band)), bx1 = this.xOf(Math.max(...this.band));
+      g.fillStyle = "rgba(39,211,238,.16)"; g.fillRect(bx0, this.ruler, bx1 - bx0, H - this.ruler);
+      g.strokeStyle = "#27d3ee"; g.lineWidth = 1; g.strokeRect(bx0 + .5, this.ruler + .5, bx1 - bx0, H - this.ruler - 1);
+    }
     // cursor
     const cx = Math.round(this.xOf(this.view.cursor)) + 0.5;
     if (cx >= 0 && cx <= W) {
@@ -311,6 +323,22 @@ class Wave {
       g.fillStyle = "#f4f5ff"; g.beginPath(); g.moveTo(cx - 6, 3); g.lineTo(cx + 6, 3); g.lineTo(cx, 12); g.closePath(); g.fill();
     }
     if (!this.win || this.t0 < this.win[0] || this.t1 > this.win[1]) { g.fillStyle = "#98a0cc"; g.textAlign = "right"; g.fillText("loading…", W - 8, this.ruler / 2); g.textAlign = "start"; }
+  }
+  drawTicks(g, W) {                     // one coloured mark per real access (hit / miss / error), from the access trace
+    const list = App.tr?.accesses; if (!list) return;
+    const y = this.ruler - 6; let lastPx = -1, lastK = "";
+    for (const a of list) {
+      const end = a.resp_t ?? a.accept_t; if (end < this.t0 || a.accept_t > this.t1) continue;
+      const x0 = Math.floor(this.xOf(a.accept_t)), x1 = Math.max(x0 + 1, Math.ceil(this.xOf(end)));
+      const k = a.result === "hit" ? "#34d399" : a.result === "miss" ? "#e2626d" : "#e9c35c";
+      if (x1 - x0 <= 1 && x0 === lastPx && k === lastK) continue;
+      g.fillStyle = k; g.fillRect(x0, y, x1 - x0, 5); lastPx = x0; lastK = k;
+    }
+  }
+  rowTops() {                           // y of each signal row, for overlays
+    const o = {}; let y = this.ruler;
+    for (const r of this.rows) { if (r.type === "grp") { y += this.grpH; continue; } o[r.sig.path] = y; y += this.rowH; }
+    return o;
   }
   drawSig(g, sig, y, W) {
     const d = this.data[sig.path]; if (!d) return;

@@ -57,6 +57,7 @@ class VcdIndex:
         self.sig = {}                # path -> dict(width,label,group,fmt,times,vals)
         self.end_time = 0
         self.missing = []
+        self.catalog = {}            # every recorded non-parameter variable: path -> dict(width, ident, kind)
         self._parse()
         self._cache_events()
 
@@ -85,6 +86,8 @@ class VcdIndex:
                     elif s.startswith("$var"):
                         p = s.split()
                         path = ".".join(scope + [p[4]])
+                        if p[1] not in ("parameter", "real", "string", "event") and int(p[2]) <= 512 and path not in self.catalog:
+                            self.catalog[path] = dict(width=int(p[2]), ident=p[3], kind=p[1])
                         if path in want:
                             id_to_paths.setdefault(p[3], []).append(path)
                             widths[path] = int(p[2])
@@ -121,6 +124,40 @@ class VcdIndex:
                                       times=data[ident][0], vals=data[ident][1])
         self.missing = [p for p in want if p not in self.sig]
 
+    def ensure(self, paths):
+        """Load additional recorded signals (anything in the catalog) with one pass over the VCD. The file is read-only."""
+        todo = [p for p in paths if p in self.catalog and p not in self.sig]
+        if not todo:
+            return
+        by_id = {}
+        for p in todo:
+            by_id.setdefault(self.catalog[p]["ident"], []).append(p)
+        data = {i: ([], []) for i in by_id}
+        in_defs, cur_t = True, 0
+        with open(self.path, "r", errors="replace") as f:
+            for line in f:
+                if in_defs:
+                    if line.lstrip().startswith("$enddefinitions"):
+                        in_defs = False
+                    continue
+                c = line[:1]
+                if c == "#":
+                    cur_t = int(line[1:])
+                elif c == "b":
+                    sp = line.index(" ")
+                    d = data.get(line[sp + 1:].strip())
+                    if d is not None:
+                        d[0].append(cur_t); d[1].append(_val(line[1:sp]))
+                elif c in "01xzXZ":
+                    d = data.get(line[1:].strip())
+                    if d is not None:
+                        d[0].append(cur_t); d[1].append(_val(c))
+        for ident, ps in by_id.items():
+            for p in ps:
+                cat = self.catalog[p]
+                self.sig[p] = dict(path=p, width=cat["width"], label=p.replace("tb_cache_controller.", "", 1), group="All recorded signals",
+                                   fmt="bit" if cat["width"] == 1 else "hex", times=data[ident][0], vals=data[ident][1])
+
     # ------------------------------------------------------------------ queries
     def value_at(self, path, t):
         s = self.sig.get(path)
@@ -143,19 +180,18 @@ class VcdIndex:
             pts = [[times[k], vals[k]] for k in range(a, b)]
         else:
             dense = True
-            bucket = max(1, (t1 - t0) / px)
-            last_b, last = None, None
-            for k in range(a, b):
+            # one bucket per pixel; keep the first and last change in each bucket (found by bisection, O(px log n))
+            bucket = max(1.0, (t1 - t0) / px)
+            k = a
+            while k < b:
                 bk = int((times[k] - t0) // bucket)
-                if bk != last_b:
-                    if last is not None:
-                        pts.append(last)
-                    pts.append([times[k], vals[k]])
-                    last_b, last = bk, None
-                else:
-                    last = [times[k], vals[k]]
-            if last is not None:
-                pts.append(last)
+                nxt = bisect.bisect_left(times, t0 + (bk + 1) * bucket, k, b)
+                if nxt <= k:
+                    nxt = k + 1
+                pts.append([times[k], vals[k]])
+                if nxt - 1 > k:
+                    pts.append([times[nxt - 1], vals[nxt - 1]])
+                k = nxt
         return dict(init=init, points=pts, dense=dense, count=n)
 
     # ------------------------------------------------------------------ cache reconstruction

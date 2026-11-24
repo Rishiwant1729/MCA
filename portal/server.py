@@ -436,7 +436,10 @@ class Handler(BaseHTTPRequestHandler):
                     timescale=idx.timescale, tick_ns=idx.tick_ns, end_time=idx.end_time, missing=idx.missing,
                     mstates=MSTATE_NAMES, states=state_names(),
                     signals=[dict(path=p, label=l, group=g, fmt=f, width=idx.sig[p]["width"])
-                             for (p, l, g, f) in SIGNALS if p in idx.sig]))
+                             for (p, l, g, f) in SIGNALS if p in idx.sig],
+                    extra=[dict(path=p, label=p.replace("tb_cache_controller.", "", 1), width=c["width"],
+                                group="DUT internals" if ".dut." in p else "Testbench internals")
+                           for p, c in idx.catalog.items() if p not in idx.sig]))
             if what in ("accesses", "export"):
                 res = get_accesses(run_id)
                 if res is None:
@@ -453,7 +456,9 @@ class Handler(BaseHTTPRequestHandler):
                                       extra={"Content-Disposition": f'attachment; filename="{run_id}_trace.csv"'})
                 return self._err(400, "fmt must be csv or json")
             if what == "wave":
-                paths = [p for p in q.get("signals", [""])[0].split(",") if p in idx.sig]
+                paths = [p for p in q.get("signals", [""])[0].split(",") if p in idx.sig or p in idx.catalog]
+                with index_lock:
+                    idx.ensure(paths)
                 t0, t1 = int(float(q["t0"][0])), int(float(q["t1"][0]))
                 px = max(50, min(int(q.get("px", ["1000"])[0]), 4000))
                 if t1 <= t0:
@@ -467,7 +472,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(dict(t0=t0, t1=t1, signals=out))
             if what == "value":
                 t = int(float(q["t"][0]))
-                paths = [p for p in q.get("signals", [""])[0].split(",") if p in idx.sig]
+                paths = [p for p in q.get("signals", [""])[0].split(",") if p in idx.sig or p in idx.catalog]
+                with index_lock:
+                    idx.ensure(paths)
                 return self._json({p: fmt_value(idx.sig[p]["width"], idx.value_at(p, t)) for p in paths})
             if what == "lines":
                 t = int(float(q["t"][0]))

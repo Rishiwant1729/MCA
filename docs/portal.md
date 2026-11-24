@@ -1,7 +1,7 @@
 # Simulation Portal
 
 A local web app that runs the real Icarus Verilog testbench and shows what happened: results, FSM path, cache lines,
-access trace and waveform. Five pages share one selected run: **Simulation, Cache Viewer, Waveform, Access Trace, Learn**.
+access trace and waveform. Four pages share one selected run: **Simulation, Cache Viewer, Waveform, Access Trace**.
 Everything shown is read from the VCD that the testbench wrote for that run, or from the RTL source text. Nothing is
 sample data. (UI layout and look follow the supplied *cache_controller_portal_ui_package* mockups; the numbers in those
 images were placeholders and are not used.)
@@ -23,19 +23,21 @@ the page reconnects by itself.
 2. Look at the **FSM**: the cloud-shaped states on the recorded path are highlighted and numbered. The text under it says
    why (for example "line #0 held tag 0x0, request tag was 0x1, so MISS_REQ → WAIT_MEM → REFILL").
 3. Click a row in **Access Trace**. Every other page now points at that access. **View cache line** opens the Cache Viewer
-   on that line; **View waveform** moves the waveform cursor to that access.
-4. **Waveform**: scroll to zoom, drag to pan, click to place the cursor, ← → to step one clock, ⏮ ◀ ▶ ⏭ to jump between
-   accesses. **Download VCD** (top bar) gives the original file for GTKWave.
-5. **Learn**: tabs explain the architecture using the real configuration and, on *Performance*, the numbers measured in your run.
+   on that line; **View waveform** opens the waveform in Single Access mode on that access.
+4. **Waveform** has three modes:
+   - **Overview**: the whole timeline, key signals only, grouped (Clock & Reset, CPU Interface, Cache Logic, FSM, Memory Interface, Cache Refill; groups collapse). Drag on the waveform to select a region and zoom into it. Green/red marks under the ruler are real hit/miss accesses.
+   - **Single Access** (default, on the selected access, or the first miss): zooms to the selected access using its real accept/response timestamps from the VCD, with 3 clocks of context either side. The access number is shown in a banner and on the waveform; FSM transitions (dashed lines) and memory operations (amber boxes) are real signal changes, listed with timestamps under *Access Events*.
+   - **Full Waveform**: no default filtering; all indexed signals shown, and *Choose signals* can add any signal recorded in the VCD (loaded on demand). Manual zoom, scroll bar and panning.
+
+   Controls: Zoom In/Out, Fit Entire Simulation, Fit Selected Access, Previous/Next Access, Show Important Signals, Reset View. Scroll zooms, click places the cursor, ← → step one clock. The VCD file is never modified; the backend serves only the visible window, downsampled to the screen width, and fetches finer detail as you zoom (18 ms for the full timeline of the 5000-request run). **Download VCD** (top bar) gives the original file for GTKWave.
 
 ## Pages
 | Page | What it shows | Source of the data |
 |---|---|---|
 | Simulation | Controls, results cards (accesses, hits, misses, hit rate, AMAT, cycles, memory transactions), address decoder, FSM, cache snapshot, mini waveform and trace | Backend run record + VCD trace |
 | Cache Viewer | 64-line table (valid, tag, 16 data bytes), search and valid/invalid filter, selected-line details, byte grid | Cache contents rebuilt from the VCD at a chosen time |
-| Waveform | 30 signals in collapsible groups, value at cursor, hex/binary/decimal/raw-bit display, state timeline, trace info | VCD (served in small windows) |
+| Waveform | three modes (Overview, Single Access, Full); key signals in collapsible groups, any recorded signal on demand, value at cursor, hex/binary/decimal/raw-bit display, state timeline, trace info | VCD (served in small windows) |
 | Access Trace | Table of every CPU access (cycle, address, tag, index, offset, hit/miss, FSM transition), filters, search, paging, summary, H/M/E sequence, CSV/JSON export | VCD |
-| Learn | Overview, cache basics, address mapping (interactive), FSM design, cache line format, Verilog tips, performance | RTL source text and the selected run |
 
 ## How the numbers are obtained
 - **Access trace.** An access is accepted on a rising clock edge where `req_valid` and `req_ready` were both 1 just before

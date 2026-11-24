@@ -27,7 +27,7 @@ function needsData() {
 const statCard = (cls, ic, label, val, unit = "") => `<div class="stat ${cls}"><div class="k">${icon(ic, 16)}${esc(label)}</div><div class="v">${val}${unit ? ` <small>${esc(unit)}</small>` : ""}</div></div>`;
 const resultTag = (r) => r === "hit" ? `<span class="tag hit">${icon("check", 12)} Hit</span>` : r === "miss" ? `<span class="tag miss">${icon("xcircle", 12)} Miss</span>`
   : `<span class="tag err">${esc(r === "error" ? "Error" : r)}</span>`;
-const explain = (tab, text = "Explain this") => `<a class="btn sm" href="#/learn?${paramsFromState({ tab })}" title="Open the Learn page">${icon("help", 14)} ${esc(text)}</a>`;
+const explain = () => "";
 
 function summaryNums() {
   const s = App.tr?.summary; if (!s) return null;
@@ -327,117 +327,6 @@ function paintLine() {
     <p class="note" style="margin-top:10px">Bytes ${hex(0)}–${hex(c.block_bytes - 1)} of the block (little-endian: byte +0 is the lowest address). Words = groups of 4 bytes.</p>` : `<div class="empty">No data — this line is invalid.</div>`;
 }
 
-// ================================================================ page: Waveform
-const WDEF = new Set(["clk", "rst_n", "req_valid", "req_ready", "req_addr", "resp_valid", "resp_hit (hit/miss)", "FSM state", "mem_req_valid", "mem_resp_valid", "refill active"]);
-let wave = null, valTimer = null;
-function pageWaveform() {
-  const bad = needsData(); if (bad) return head("activity", "Waveform Viewer (VCD)", "Visualize simulation signals, timing and state transitions") + bad;
-  const r = App.run;
-  return head("activity", "Waveform Viewer (VCD)", "Visualize simulation signals, timing and state transitions", `
-      <label class="f"><span class="sr">VCD file</span><select id="wFile" aria-label="VCD file of this run" style="min-width:210px"><option>${esc(r.vcd.file)} — ${esc(r.run_id)}</option></select></label>
-      <div class="wtool"><button class="btn icon" id="wZin" aria-label="Zoom in" title="Zoom in (+)">${icon("zoomin", 18)}</button><button class="btn icon" id="wZout" aria-label="Zoom out" title="Zoom out (−)">${icon("zoomout", 18)}</button>
-      <button class="btn icon" id="wFit" aria-label="Fit whole simulation" title="Fit (0)">${icon("fit", 18)}</button>
-      <button class="btn icon" id="wFirst" aria-label="Jump to first event" title="First event">${icon("skipback", 18)}</button><button class="btn icon" id="wPrev" aria-label="Previous event" title="Previous event">${icon("left", 18)}</button>
-      <button class="btn icon" id="wNext" aria-label="Next event" title="Next event">${icon("right", 18)}</button><button class="btn icon" id="wLast" aria-label="Jump to last event" title="Last event">${icon("skipfwd", 18)}</button></div>
-      <span class="chip cur" id="wTime">t = ${esc(fmtNs(App.wv.cursor))}</span>`) + `
-  <section class="panel"><div class="wtool" style="margin-bottom:10px">
-      <label class="f" style="flex-direction:row;align-items:center;gap:8px">Radix<select id="wRadix"><option value="hex">hex</option><option value="bin">binary</option><option value="dec">decimal</option><option value="raw">raw bits</option></select></label>
-      <span style="position:relative"><button class="btn sm" id="wSigBtn" aria-expanded="false">${icon("list", 14)} Choose signals</button><div class="sigmenu" id="wSigMenu" hidden></div></span>
-      <span class="note">scroll = zoom · drag = pan · click or drag the ruler = move cursor · ← → step one clock · shift = ×10</span></div>
-    <div class="wbox" id="wBox"><div class="wnames" id="wNames"></div><div class="wcanvas"><canvas id="wCanvas" aria-label="Waveform. Click to place the cursor."></canvas></div></div>
-    <input type="range" class="hscroll" id="wScroll" min="0" max="1000" value="0" aria-label="Horizontal position"></section>
-  <div class="grid g3">
-    <section class="panel" aria-labelledby="h-ti"><h2 class="ph" id="h-ti">${icon("info", 20)} Trace Info</h2><div class="kv" id="wInfo"></div></section>
-    <section class="panel" aria-labelledby="h-cu"><h2 class="ph" id="h-cu">${icon("pointer", 20)} Cursor</h2><div class="kv" id="wCur"></div><div id="wCurAcc" style="margin-top:8px"></div></section>
-    <section class="panel" aria-labelledby="h-stl"><h2 class="ph" id="h-stl">${icon("fsm", 20)} State Timeline</h2><div id="wTl"></div></section>
-  </div>`;
-}
-function visibleSet() {
-  if (!App.wv.visible) App.wv.visible = new Set(App.info.signals.filter((s) => WDEF.has(s.label)).map((s) => s.path));
-  return App.wv.visible;
-}
-function waveRows() {
-  const vis = visibleSet(), rows = [];
-  for (const g of [...new Set(App.info.signals.map((s) => s.group))]) {
-    const sigs = App.info.signals.filter((s) => s.group === g && vis.has(s.path));
-    if (!sigs.length) continue;
-    rows.push({ type: "grp", name: g, count: sigs.length });
-    if (!App.wv.collapsed.has(g)) sigs.forEach((s) => rows.push({ type: "sig", sig: s }));
-  }
-  return rows;
-}
-function bindWaveform() {
-  wave?.destroy(); wave = null;
-  if (!App.info) return;
-  const full = App.info.end_time, cvs = $("#wCanvas");
-  if (App.wv.t0 == null) {
-    const a = selAccess(), clk = (App.tr?.clock_ns || 10) / App.info.tick_ns;
-    if (a) { App.wv.t0 = Math.max(0, a.accept_t - 4 * clk); App.wv.t1 = Math.min(full, (a.resp_t ?? a.accept_t) + 6 * clk); } else { App.wv.t0 = 0; App.wv.t1 = full; }
-    if (App.wv.t1 - App.wv.t0 < 20 * clk) App.wv.t1 = Math.min(full, App.wv.t0 + 40 * clk);
-  }
-  wave = new Wave(cvs, { view: App.wv, onCursor: onWaveCursor, onView: syncScroll });
-  $("#wRadix").value = App.wv.radix;
-  $("#wRadix").onchange = (e) => { App.wv.radix = e.target.value; wave.draw(); paintNames(); paintCursorPanel(); };
-  $("#wZin").onclick = () => wave.zoom(0.5); $("#wZout").onclick = () => wave.zoom(2); $("#wFit").onclick = () => wave.fit();
-  const jump = (t) => { if (t == null) return; wave.setCursor(t); if (t < App.wv.t0 || t > App.wv.t1) wave.centerOn(t); };
-  $("#wPrev").onclick = () => jump(nextEvent(App.wv.cursor, -1)); $("#wNext").onclick = () => jump(nextEvent(App.wv.cursor, 1));
-  $("#wFirst").onclick = () => jump(App.events[0]); $("#wLast").onclick = () => jump(App.events[App.events.length - 1]);
-  $("#wScroll").oninput = (e) => { const w = App.wv.t1 - App.wv.t0, mx = Math.max(0, full - w), s = (e.target.value / 1000) * mx; wave.view.t0 = s; wave.view.t1 = s + w; wave.draw(); wave.scheduleFetch(); };
-  $("#wSigBtn").onclick = () => { const m = $("#wSigMenu"); m.hidden = !m.hidden; $("#wSigBtn").setAttribute("aria-expanded", String(!m.hidden)); if (!m.hidden) buildSigMenu(); };
-  wave.setRows(waveRows()); paintNames(); paintInfo(); syncScroll(); onWaveCursor(App.wv.cursor, true);
-}
-function syncScroll() { const w = App.wv.t1 - App.wv.t0, mx = App.info.end_time - w, s = $("#wScroll"); if (s) s.value = mx > 0 ? Math.round((App.wv.t0 / mx) * 1000) : 0; }
-function buildSigMenu() {
-  const m = $("#wSigMenu"), vis = visibleSet();
-  m.innerHTML = [...new Set(App.info.signals.map((s) => s.group))].map((g) => `<h4>${esc(g)}</h4>` + App.info.signals.filter((s) => s.group === g).map((s) =>
-    `<label><input type="checkbox" data-p="${esc(s.path)}" ${vis.has(s.path) ? "checked" : ""}>${esc(s.label)}${s.width > 1 ? ` [${s.width - 1}:0]` : ""}</label>`).join("")).join("");
-  $$("input", m).forEach((cb) => (cb.onchange = () => { cb.checked ? vis.add(cb.dataset.p) : vis.delete(cb.dataset.p); applyRows(); }));
-}
-function applyRows() { wave.setRows(waveRows()); paintNames(); fetchCursorValues(); }
-function paintNames() {
-  const box = $("#wNames"); if (!box) return;
-  const vals = App.wv.vals || {};
-  box.innerHTML = `<div style="height:${wave.ruler}px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 10px;color:var(--muted);font-size:12px">Signal <span style="margin-left:auto">Value @ ${esc(fmtNs(App.wv.cursor))}</span></div>` +
-    wave.rows.map((r) => r.type === "grp" ? `<div class="wrow grp" style="height:${wave.grpH}px" data-g="${esc(r.name)}" title="Click to collapse or expand">${App.wv.collapsed.has(r.name) ? "▸" : "▾"} ${esc(r.name)} (${r.count})</div>`
-      : `<div class="wrow" style="height:${wave.rowH}px" title="${esc(r.sig.path)}"><input type="checkbox" checked aria-label="Show ${esc(r.sig.label)}" data-p="${esc(r.sig.path)}"><span class="nm">${esc(r.sig.label)}${r.sig.width > 1 ? ` [${r.sig.width - 1}:0]` : ""}</span><span class="vl">${esc(fmtVal(r.sig, vals[r.sig.path]))}</span></div>`).join("");
-  $$("[data-g]", box).forEach((d) => (d.onclick = () => { const g = d.dataset.g; App.wv.collapsed.has(g) ? App.wv.collapsed.delete(g) : App.wv.collapsed.add(g); applyRows(); }));
-  $$("input[data-p]", box).forEach((cb) => (cb.onchange = () => { visibleSet().delete(cb.dataset.p); applyRows(); }));
-}
-function onWaveCursor(t, silent) {
-  const a = App.tr?.accesses.find((x) => x.accept_t <= t && (x.resp_t ?? x.accept_t) >= t);
-  if (a && a.n !== App.sel.acc && !silent) { App.sel.acc = a.n; if (a.index != null) App.sel.line = a.index; syncUrl(); }
-  const tc = $("#wTime"); if (tc) tc.textContent = `t = ${fmtNs(t)}`;
-  clearTimeout(valTimer); valTimer = setTimeout(fetchCursorValues, 30);
-  paintCursorPanel();
-}
-async function fetchCursorValues() {
-  if (!App.run || !App.info || !$("#wNames")) return;
-  const t = App.wv.cursor, id = App.run.run_id;
-  const paths = [...new Set([...wave.rows.filter((r) => r.type === "sig").map((r) => r.sig.path), P + "clk", P + "dut.state", P + "req_addr"])];
-  try { const v = await api(`/api/run/${id}/value?t=${t}&signals=${encodeURIComponent(paths.join(","))}`); if (!App.run || App.run.run_id !== id || t !== App.wv.cursor) return; App.wv.vals = v; paintNames(); paintCursorPanel(); }
-  catch (e) { if (!quiet(e) && e.status !== 404 && e.status !== 409) console.warn("value:", e.message); }
-}
-function paintInfo() {
-  const r = App.run, i = App.info;
-  $("#wInfo").innerHTML = `<span>File</span><span style="color:var(--purple-l)">${esc(r.vcd.file)}</span><span>Run</span><span>${esc(r.run_id)}</span><span>Total time</span><span>${esc(fmtNs(i.end_time))}</span>
-    <span>Timescale</span><span>${esc(i.timescale)}</span><span>Signals shown</span><span>${visibleSet().size} of ${i.signals.length}</span><span>Size</span><span>${(r.vcd.bytes / 1024).toFixed(1)} KB</span>
-    <span>SHA-256</span><span title="${esc(r.vcd.sha256)}">${esc(r.vcd.sha256.slice(0, 14))}…</span>`;
-}
-function paintCursorPanel() {
-  const t = App.wv.cursor, v = App.wv.vals || {}, find = (l) => App.info.signals.find((s) => s.label === l);
-  const clk = (App.tr?.clock_ns || 10) / App.info.tick_ns, st = find("FSM state"), ad = find("req_addr"), ck = find("clk");
-  const cell = (sig, key) => (v[key] === undefined ? "–" : fmtVal(sig, v[key]));
-  const a = App.tr?.accesses.find((x) => x.accept_t <= t && (x.resp_t ?? x.accept_t) >= t);
-  const box = $("#wCur"); if (!box) return;
-  box.innerHTML = `<span>Time</span><span>${esc(fmtNs(t))}</span><span>Clock cycle</span><span>${Math.floor(t / clk)}</span><span>clk</span><span>${esc(cell(ck, P + "clk"))}</span>
-    <span>FSM state</span><span>${esc(cell(st, P + "dut.state"))}</span><span>req_addr</span><span>${esc(cell(ad, P + "req_addr"))}</span>`;
-  $("#wCurAcc").innerHTML = a ? `<span class="chip sel">Access #${a.n} · ${esc(a.result)}</span> <a class="btn sm" href="${href("trace", { acc: a.n })}">Open in trace ${icon("right", 13)}</a>`
-    : `<span class="note">The cursor is not inside a recorded access (idle or reset).</span>`;
-  const sel = a || selAccess(), tl = $("#wTl");
-  tl.innerHTML = sel ? `<div class="chain">${sel.states.map((s, i) => `${i ? `<span class="ar">${icon("right", 14)}</span>` : ""}<span class="st ${stateClass(s)}">${esc(s)}</span>`).join("")}</div>
-    <p class="note" style="margin-top:8px">FSM path of access #${sel.n}, read from <span class="mono">dut.state</span> in the VCD (${sel.latency ?? "–"} cycles accept → response).</p>` : `<div class="empty">No access selected.</div>`;
-}
-
 // ================================================================ page: Access Trace
 const TR = { filter: "all", q: "", page: 0, per: 50 };
 function traceFiltered() {
@@ -500,8 +389,8 @@ function paintAccess() {
     <span>Latency</span><span>${a.latency ?? "–"} cycles</span>${a.rdata != null ? `<span>Data returned</span><span>${hex(a.rdata, 8)}</span>` : ""}</div>
     <p class="note" style="margin:8px 0">${esc(whyText(a))}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${a.index != null ? `<a class="btn sm" href="${href("cache", { line: a.index })}">${icon("layers", 14)} View cache line</a>` : ""}
-      <a class="btn sm" href="${href("waveform", { acc: a.n })}" id="toWave">${icon("activity", 14)} View waveform</a></div>` : `<div class="empty">Select an access.</div>`;
-  const tw = $("#toWave"); if (tw) tw.onclick = () => { App.wv.cursor = a.accept_t; App.wv.t0 = App.wv.t1 = null; };
+      <a class="btn sm" href="${href("waveform", { acc: a.n, mode: "access" })}" id="toWave">${icon("activity", 14)} View waveform</a></div>` : `<div class="empty">Select an access.</div>`;
+  const tw = $("#toWave"); if (tw) tw.onclick = () => { App.wv.cursor = a.accept_t; };
   const list = App.tr.accesses, i = Math.max(0, list.findIndex((x) => x.n === App.sel.acc)), from = Math.max(0, Math.min(i - 5, list.length - 12)), win = list.slice(from, from + 12);
   $("#sqBox").innerHTML = `<div class="seq" role="group" aria-label="Access sequence">${from > 0 ? `<span class="note" style="align-self:center">…</span>` : ""}${win.map((x) => {
     const k = x.result === "hit" ? "H" : x.result === "miss" ? "M" : x.result === "error" ? "E" : "X";
@@ -509,9 +398,6 @@ function paintAccess() {
   $$("#sqBox button").forEach((b) => (b.onclick = () => { selectAccess(Number(b.dataset.k)); paintTrace(); paintAccess(); }));
 }
 
-// ================================================================ page: Learn
-const LEARN_TABS = [["overview", "Overview", "home"], ["basics", "Cache Basics", "layers"], ["mapping", "Address Mapping", "binary"], ["fsm", "FSM Design", "fsm"],
-  ["cacheline", "Cache Line", "blocks"], ["verilog", "Verilog Tips", "code"], ["performance", "Performance", "bars"]];
 function barAddr() {
   const c = App.cfg;
   return `<div class="bar3" role="img" aria-label="Address split into tag, index and offset"><div class="tg" style="flex:${c.tag_bits}">Tag (${c.tag_bits} bits)</div><div class="ix" style="flex:${c.index_bits + 3}">Index (${c.index_bits} bits)</div><div class="of" style="flex:${c.offset_bits + 3}">Offset (${c.offset_bits} bits)</div></div>
@@ -553,70 +439,8 @@ function fsmTable() {
   return `<div class="tw"><table class="t"><thead><tr><th>Encoding</th><th>State</th><th>What it does</th><th>Transition</th></tr></thead><tbody>${App.cfg.states.map((s) => `<tr><td class="m">3'b${bin(s.code, 3)}</td><td><span class="st ${stateClass(s.name)}" style="padding:2px 10px;border:1.5px solid;border-radius:99px;font-family:var(--mono);font-size:12px">${esc(s.name)}</span></td><td style="white-space:normal">${esc((info[s.name] || ["–"])[0])}</td><td style="white-space:normal">${esc((info[s.name] || ["", "–"])[1])}</td></tr>`).join("")}</tbody></table></div>
     <p class="note">State names and encodings are read from <span class="mono">rtl/cache_controller.v</span>.</p>`;
 }
-function learnBody(tab) {
-  const c = App.cfg;
-  const ex = c.cache_bytes, d1 = decode(0x44), d2 = decode(0x44 + ex);
-  switch (tab) {
-    case "basics": return `<div class="grid g2"><section class="panel prose"><h2 class="ph">${icon("layers", 20)} Why a cache?</h2>
-      <p>A processor is much faster than main memory. A cache is a small, fast memory that keeps copies of recently used blocks so most requests are answered quickly.</p>
-      <h3>Locality</h3><ul><li><b>Temporal locality:</b> data used recently is likely to be used again soon.</li><li><b>Spatial locality:</b> data near recently used data is likely to be used soon, so a miss fetches a whole ${c.block_bytes}-byte block.</li></ul>
-      <h3>Hit and miss</h3><p>A <b>hit</b> means the block is already in the cache. A <b>miss</b> means the controller must fetch it from main memory and store (refill) it in the right line.</p></section>
-      <section class="panel prose"><h2 class="ph">${icon("blocks", 20)} Direct mapping</h2><p>In a direct-mapped cache each memory block can live in exactly one line, chosen by the index bits of its address. That makes lookup simple and fast (one tag comparison), but two blocks with the same index keep evicting each other (a <b>conflict miss</b>).</p>
-      <div class="kv"><span>Address ${hex(0x44)}</span><span>tag ${hex(d1.tag)} · line ${d1.index}</span><span>Address ${hex(0x44 + ex)}</span><span>tag ${hex(d2.tag)} · line ${d2.index}</span></div>
-      <p class="note" style="margin-top:8px">Two addresses ${ex} bytes apart (the cache capacity) share a line but have different tags, so they conflict. The <b>Direct-Mapped Conflict Miss</b> scenario shows exactly this.</p></section></div>`;
-    case "mapping": return `<section class="panel prose"><h2 class="ph">${icon("binary", 20)} Address mapping <small>${c.addr_width}-bit byte address</small></h2>${barAddr()}
-      <div class="formula">offset = addr mod ${c.block_bytes} · index = ⌊addr / ${c.block_bytes}⌋ mod ${c.lines} · tag = ⌊addr / ${ex}⌋</div>
-      <h3>Try it</h3><div class="addr-row"><input type="text" id="lmIn" value="0x00000044" aria-label="Hex address" spellcheck="false"><span class="seg" id="lmPre"><button class="pill" data-a="0x00000044">0x44</button><button class="pill" data-a="0x00000444">0x444 (conflicts with 0x44)</button><button class="pill" data-a="0x00001234">0x1234</button></span></div>
-      <div id="lmOut"></div></section>`;
-    case "fsm": return `<div class="grid g2"><section class="panel"><h2 class="ph">${icon("fsm", 20)} FSM (Cache Controller)</h2>${fsmSvg(selAccess()?.states ?? [])}
-      <p class="note">${selAccess() ? `Highlighted: the real path of access #${selAccess().n} from the selected run (numbers show the order).` : "No run selected: all states shown. The dashed arrow is the hit shortcut LOOKUP → COMPLETE."}</p></section>
-      <section class="panel"><h2 class="ph">${icon("list", 20)} States and transitions</h2>${fsmTable()}</section></div>`;
-    case "cacheline": return `<div class="grid g2"><section class="panel"><h2 class="ph">${icon("blocks", 20)} Cache line format</h2>${barLine()}</section>
-      <section class="panel prose"><h2 class="ph">${icon("memory", 20)} Capacity and overhead</h2><div class="kv"><span>Data per line</span><span>${c.block_bits} bits</span><span>Tag per line</span><span>${c.tag_bits} bits</span><span>Valid per line</span><span>1 bit</span>
-      <span>Lines</span><span>${c.lines}</span><span>Data storage</span><span>${c.lines * c.block_bits} bits (${kb(c.cache_bytes)})</span><span>Metadata (tag + valid)</span><span>${c.lines * (c.tag_bits + 1)} bits</span>
-      <span>Metadata overhead</span><span>${((100 * (c.tag_bits + 1)) / c.block_bits).toFixed(1)}% of the data bits</span></div>
-      <p class="note" style="margin-top:8px">Capacity (${kb(c.cache_bytes)}) counts only data. The tag and valid bits are extra storage. Valid bits live in flip-flops so one reset clears them all; an invalid line's tag and data are ignored.</p></section></div>`;
-    case "verilog": return `<div class="grid g2"><section class="panel prose"><h2 class="ph">${icon("code", 20)} RTL modules (<span class="mono">rtl/</span>)</h2><ul>
-      <li><code>address_decoder.v</code> — splits an address into tag / index / offset from the parameters.</li><li><code>cache_data_ram.v</code> — ${c.lines} × ${c.block_bytes} B data array (byte lanes, synchronous read).</li>
-      <li><code>cache_tag_ram.v</code> — one ${c.tag_bits}-bit tag per line.</li><li><code>cache_valid_ram.v</code> — ${c.lines} valid flip-flops cleared by reset.</li>
-      <li><code>main_memory_interface.v</code> — start/done protocol towards main memory.</li><li><code>cache_controller.v</code> — the FSM, hit logic, response mux and ${c.counters} statistics counters.</li></ul>
-      <h3>Hit logic</h3><div class="formula">hit = valid[index] &amp;&amp; (tag[index] == request_tag)</div></section>
-      <section class="panel prose"><h2 class="ph">${icon("file", 20)} Testbench and commands</h2><ul><li><code>sim/main_memory_model.v</code> — memory with configurable latency.</li><li><code>sim/reference_memory.v</code> — independent golden model for checking data.</li>
-      <li><code>sim/tb_cache_controller.v</code> — self-checking tests; writes the VCD this portal displays.</li></ul>
-      <div class="formula" style="text-align:left">make sim<br>make perf<br>make synth<br>make portal</div><p class="note">Run these from the project folder. The portal calls the same compile and simulate commands you can see under “Test results, logs and commands” on the Simulation page.</p></section></div>`;
-    case "performance": return `<div class="grid g2"><section class="panel prose"><h2 class="ph">${icon("timer", 20)} AMAT: average memory access time</h2>${amatBlock()}</section>
-      <section class="panel prose"><h2 class="ph">${icon("info", 20)} Timing assumptions</h2><ul><li><b>Hit time</b> = cycles from accepting a request to the response, for a hit.</li>
-      <li><b>Miss penalty</b> = the <i>extra</i> cycles a miss costs beyond a hit (miss latency − hit time). Using the whole miss latency here would count the lookup twice.</li>
-      <li>This design's cycle counts come from the testbench: hit = 2 cycles, miss = latency + 7 (so penalty = latency + 5). They are measured, not assumed.</li>
-      <li>The portal measures the average latency directly <i>and</i> with the formula; they agree, which shows no cycle is double counted.</li></ul>
-      <p class="note">An abstract formula with an assumed miss penalty is a model; a cycle count from the VCD is a measurement. Pages label which one they show.</p></section></div>`;
-    default: return `<div class="grid gl"><section class="panel"><h2 class="ph">${icon("chip", 20)} System Architecture</h2>${archDiagram()}</section>
-      <section class="panel"><h2 class="ph">${icon("binary", 20)} ${c.addr_width}-bit Address Decomposition</h2>${barAddr()}</section></div>
-      <div class="grid g3"><section class="panel"><h2 class="ph">${icon("fsm", 20)} FSM (Cache Controller)</h2>${fsmSvg(selAccess()?.states ?? [])}</section>
-      <section class="panel"><h2 class="ph">${icon("blocks", 20)} Cache Line Format</h2>${barLine()}</section><section class="panel prose"><h2 class="ph">${icon("timer", 20)} Performance: AMAT</h2>${amatBlock()}</section></div>`;
-  }
-}
-function pageLearn() {
-  const tab = LEARN_TABS.some((t) => t[0] === App.params.tab) ? App.params.tab : "overview";
-  return head("book", "Learn: Cache Controller", "Understand concepts, architecture and performance of a direct-mapped cache.") + `
-  <div class="tabs" role="tablist" aria-label="Learn sections">${LEARN_TABS.map(([id, l, ic]) => `<a class="tab ${id === tab ? "on" : ""}" role="tab" aria-selected="${id === tab}" href="${href("learn", { tab: id })}">${icon(ic, 17)} ${l}</a>`).join("")}</div>${learnBody(tab)}`;
-}
-function bindLearn() {
-  const inp = $("#lmIn"); if (!inp) return;
-  const draw = () => {
-    const v = parseHexAddr(inp.value), out = $("#lmOut"), c = App.cfg;
-    if (v == null) { out.innerHTML = `<p class="err-text" role="alert">Enter 1–8 hex digits.</p>`; return; }
-    const d = decode(v), b = bin(v, c.addr_width), tb = c.tag_bits, ib = c.index_bits;
-    out.innerHTML = `<div class="bits"><div class="tg">${b.slice(0, tb).replace(/(.{4})(?=.)/g, "$1 ")}</div><div class="ix">${b.slice(tb, tb + ib)}</div><div class="of">${b.slice(tb + ib)}</div></div>
-      <div class="kv"><span>Tag</span><span>${hex(d.tag, 6)}</span><span>Index (line)</span><span>${d.index}</span><span>Offset</span><span>${d.offset} (word ${d.offset >> 2}, byte ${d.offset & 3})</span>
-      <span>Block starts at</span><span>${hex(v - BigInt(d.offset), 8)}</span><span>Same line as</span><span>${hex(v ^ BigInt(c.cache_bytes), 8)} (differs only in the tag)</span></div>`;
-  };
-  inp.oninput = draw; draw();
-  $$("#lmPre [data-a]").forEach((b) => (b.onclick = () => { inp.value = b.dataset.a; draw(); }));
-}
-
 // ================================================================ router
-const PAGE_FN = { simulation: [pageSimulation, bindSimulation], cache: [pageCache, bindCache], waveform: [pageWaveform, bindWaveform], trace: [pageTrace, bindTrace], learn: [pageLearn, bindLearn] };
+const PAGE_FN = { simulation: [pageSimulation, bindSimulation], cache: [pageCache, bindCache], waveform: [pageWaveform, bindWaveform], trace: [pageTrace, bindTrace] };
 function parseHash() {
   const h = location.hash.slice(1) || "/simulation", [path, qs] = h.split("?");
   const page = path.replace(/^\//, "");
