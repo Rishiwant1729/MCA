@@ -1,25 +1,79 @@
-# tools / environment
-.venv/
-__pycache__/
-.DS_Store
-*.vvp
+# ==============================================================================
+# Direct-Mapped Cache Controller — .gitignore
+#
+# Generated artifacts are intentionally untracked: they are reproducible with the
+# Makefile (make compile / test / regression / wave / synth / perf). A few small
+# log/report files are deliberately KEPT as verification evidence (see negations).
+# ==============================================================================
 
-# generated simulation output (reproduce with: make regression / make wave TEST=...)
-simulation/waveforms/*.vcd
+# --- Icarus Verilog: compiled simulation binaries ---
+*.vvp
+*.out
+a.out
+
+# --- Waveforms (GTKWave / viewers) ---
+*.vcd
+*.fst
+*.fst.hier
+*.ghw
+*.lxt
+*.lxt2
+*.vzt
+simulation/waveforms/
+
+# --- Simulation logs (regenerated) — but keep the two evidence logs ---
 simulation/logs/*.log
-# tb_cache_lat4.log is kept as verification evidence (expected vs actual per test)
 !simulation/logs/tb_cache_lat4.log
 !simulation/logs/regression_summary.txt
 
-# generated synthesis output (reproduce with: make synth); the *_stat.txt reports and SUMMARY.md stay tracked
+# --- Yosys / synthesis (the *_stat.txt reports and SUMMARY.md stay tracked) ---
 synth/*.json
 synth/*.log
+*.blif
+*.edif
+*.asc
+*.bit
+*.bin
 
-# LaTeX build files (the report PDF and sources stay tracked)
+# --- Local simulation run outputs (e.g. the optional portal) ---
+results/portal_runs/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# --- LaTeX build files (the report PDF and .tex sources stay tracked) ---
 report/*.aux
 report/*.log
 report/*.out
 report/*.toc
+report/*.lof
+report/*.lot
 report/*.bbl
 report/*.blg
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
 report/main.pdf
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# --- Editors / IDEs ---
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
