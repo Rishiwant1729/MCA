@@ -96,8 +96,13 @@ function showImportant() {
 function pageWaveform() {
   const T = "Waveform Viewer (VCD)", S = "Visualize simulation signals, timing and state transitions";
   const bad = needsData(); if (bad) return head("activity", T, S) + bad;
-  if (!App.wv.mode) App.wv.mode = "overview";
-  const r = App.run, m = App.wv.mode, hasAcc = !!App.tr?.accesses.length;
+  const hasAcc = !!App.tr?.accesses.length;
+  if (!App.wv.mode) {                       // default: Single Access on the selected access (first miss if none selected)
+    if (hasAcc && !selAccess()) defaultSelection();
+    App.wv.mode = hasAcc ? "access" : "overview";
+    if (App.wv.mode === "access") { App.wv.cursor = selAccess().accept_t; App.wv.t0 = App.wv.t1 = null; }
+  }
+  const r = App.run, m = App.wv.mode;
   const b = (id, ic, label, tip, dis) => `<button class="btn sm" id="${id}" title="${tip}" ${dis ? "disabled" : ""}>${icon(ic, 14)} ${label}</button>`;
   return head("activity", T, S, `<label class="f"><span class="sr">VCD file</span><select id="wFile" aria-label="VCD file of this run" style="min-width:210px"><option>${esc(r.vcd.file)} — ${esc(r.run_id)}</option></select></label>
       <span class="chip cur" id="wTime">t = ${esc(fmtNs(App.wv.cursor))}</span>`) + `

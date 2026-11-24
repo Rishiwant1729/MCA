@@ -1,81 +1,98 @@
-# Direct-Mapped Cache Controller (Modern Computer Architecture capstone)
+# Direct-Mapped Cache Controller (Modern Computer Architecture project)
 
-A synthesizable Verilog direct-mapped cache controller (1 KB, 16-byte blocks, 64 lines, 32-bit addresses) with a
-configurable-latency main-memory model, a self-checking testbench, measured performance statistics, and Yosys synthesis
-results. **Everything here is software simulation/synthesis on macOS; nothing was run on physical hardware.**
+A synthesizable Verilog direct-mapped cache controller placed between a processor and a simulated main memory, with a self-checking
+testbench, automated regression, waveform generation, Yosys synthesis reports and measured hit-rate / AMAT analysis.
+Everything here is simulation (Icarus Verilog) and synthesis (Yosys) on macOS; **nothing was run on physical hardware.**
 
-Status: **read-only cache (milestone 1) complete and verified.** Write support (write-through, write-allocate) is a planned extension, not implemented.
+## Problem statement and objectives
+Design a direct-mapped cache controller and analyse cache hit/miss behaviour using representative access traces. The controller splits
+each address into tag, index and offset, checks the valid bit and tag, serves hits from the cache, fetches a 16-byte block from main memory on a
+miss, refills the selected line, and returns the data. Objectives: correct lookup and refill, valid-bit handling, hit/miss statistics, AMAT analysis, verification and synthesis results.
 
-## Setup (macOS, Homebrew)
+## Architecture
+| Parameter | Value |
+|---|---|
+| Type / write policy | direct mapped, read-only (writes return `resp_err`; write-through is a planned extension) |
+| Address | 32-bit, byte addressed, word-aligned accesses |
+| Capacity / block / lines | 1 KB / 16 bytes / 64 |
+| Tag / index / offset | `addr[31:10]` (22 b) / `addr[9:4]` (6 b) / `addr[3:0]` (4 b) |
+| Line contents | valid bit + 22-bit tag + 128-bit block |
+| Hit | `valid[index] && tag[index] == request tag` |
+
+![block diagram](docs/diagrams/block_diagram.png)
+
+**FSM** (`rtl/cache_controller.v`): hit `IDLE -> LOOKUP -> COMPLETE` (2 cycles); miss `IDLE -> LOOKUP -> MISS_REQ -> WAIT_MEM -> REFILL -> COMPLETE`
+(LAT + 7 cycles for memory latency LAT). Details and diagram: [docs/fsm_design.md](docs/fsm_design.md); design notes: [docs/architecture.md](docs/architecture.md).
+
+| RTL module (`rtl/`) | Role |
+|---|---|
+| `address_decoder` | tag / index / offset / block address from parameters |
+| `cache_data_ram`, `cache_tag_ram`, `cache_valid_ram` | storage: 16 byte-lane RAMs; tag RAM; 64 reset-cleared valid flip-flops |
+| `main_memory_interface` | memory-side protocol: start/done toward the controller, request held until accepted |
+| `cache_controller` | top level: FSM, hit/miss logic, response mux, statistics counters |
+
+Simulation-only models are in `sim/` (`main_memory_model` with configurable latency and optional back-pressure, `reference_memory`, testbenches); synthesizable RTL and testbench code are kept separate.
+
+## Requirements and setup (macOS, Homebrew)
 ```bash
 brew install icarus-verilog yosys graphviz
-brew tap homebrew/cask && brew install --cask gtkwave      # optional: interactive waveform viewer
-python3 -m venv .venv && .venv/bin/pip install matplotlib   # plots
+brew install --cask gtkwave                                # optional: view waveforms
+python3 -m venv .venv && .venv/bin/pip install matplotlib   # only for `make perf` / `make waves`
 ```
-Verify the toolchain:
-```bash
-iverilog -V | head -1 && yosys -V && dot -V && make smoke
-```
-Tested with Icarus Verilog 13.0, Yosys 0.70, Python 3.14, matplotlib 3.11.
+Tested with Icarus Verilog 13.0 and Yosys 0.70.
 
 ## Commands
 | Command | What it does |
 |---|---|
-| `make smoke` | toolchain check (tiny counter simulation) |
-| `make lint` | `iverilog -Wall` on all RTL + Yosys elaboration/check |
-| `make sim` | unit tests + 11-test self-checking testbench at memory latency 1, 2, 4, 8, 16; nonzero exit on failure |
-| `make perf` | workload traces → simulation → `results/performance/*.csv` and plots |
-| `make synth` | Yosys generic and iCE40-style synthesis → `results/synthesis/` |
-| `make portal` | web portal: run a test scenario, view its real waveform, FSM and cache lines at the cursor (http://127.0.0.1:8765/) |
-| `make verify-portal` | proves portal waveforms come from real simulation runs and tests the backend's input validation |
-| `make waves` | regenerate the timing diagram and block/FSM diagrams |
-| `make all` | everything above |
+| `make compile` | `iverilog -Wall` on RTL and testbenches, Yosys elaboration check |
+| `make test [LAT=4]` | unit tests + the 12-test system testbench at one memory latency; non-zero exit on failure |
+| `make regression` | latency 1/2/4/8/16, memory back-pressure, extra seeds (14 runs); summary in `results/simulation_logs/regression_summary.txt` |
+| `make wave TEST=<name> [LAT=4]` | complete VCD for one test in `results/waveforms/`; `make wave` lists names (e.g. `conflict_miss`, `conflict_100_1124_104`, `all`) |
+| `make synth` | Yosys generic and iCE40 flows (`synth/*.ys`) -> `results/synthesis/` incl. `SUMMARY.md` |
+| `make clean` | remove generated logs, VCDs and binaries |
+| `make perf` | workload traces -> hit rate and AMAT CSVs and plots in `results/performance/` |
+| `make waves`, `make report` | regenerate diagrams / the IEEE report PDF (needs graphviz, pdflatex) |
 
-View a waveform: `open -a gtkwave results/waveforms/tb_cache_lat4.vcd` (the `test_no` signal shows which test is running).
+View a waveform: `gtkwave results/waveforms/direct_mapped_conflict_lat4.vcd`.
 
-## Web portal
-```bash
-make portal
+## Verification results
+12 self-checking tests, each with an expected result, plus unit tests and a memory-protocol checker. Last `make regression`: **14 of 14 runs pass**
+(latency 1-16, back-pressure, seeds). Test list, expected vs actual, method and limits: [docs/verification.md](docs/verification.md).
+The brief's conflict example passes: 100 -> 1124 -> 100 = MISS MISS MISS, then 100 -> 104 = MISS HIT.
+
+## Performance (measured, LAT = 4; `results/performance/performance.csv`)
+| Workload | Hit rate | AMAT (cycles) |
+|---|---|---|
+| repeated | 99.8% | 2.02 |
+| sequential | 75.0% | 4.25 |
+| random_hot | 70.1% | 4.69 |
+| random | 1.4% | 10.88 |
+| conflict | 0.0% | 11.00 |
+
+Hit time 2 cycles, miss penalty LAT + 5. The formula and the measured average latency agree for every workload.
+
+## Synthesis results (Yosys estimates, no place-and-route or timing)
+iCE40-style flow, flattened: **635 LUT4, 487 flip-flops, 18 block RAMs** (data 16, tag 2; valid bits are flip-flops). The generic flow, which has no RAM macro,
+gives 26160 cells with 10237 flip-flops because the memories become registers. Warnings, per-module numbers and interpretation:
+[docs/synthesis.md](docs/synthesis.md), [results/synthesis/SUMMARY.md](results/synthesis/SUMMARY.md). These are not FPGA utilisation measurements.
+
+## Repository layout
 ```
-Opens <http://127.0.0.1:8765/> (leave the Terminal window open; Ctrl-C stops it; or double-click `Start Portal.command`).
-Four pages (Simulation, Cache Viewer, Waveform, Access Trace) share one selected run. Pick a scenario, press **Run Simulation**,
-and inspect the real results, FSM path, cache lines, access trace and VCD waveform; **Download VCD** opens in GTKWave.
-Details, how each number is obtained, safety model and troubleshooting: [extras/portal/README.md](extras/portal/README.md).
-
-## IEEE report
-`report/Direct_Mapped_Cache_Controller_IEEE_Report.pdf` (source `report/main.tex`, IEEEtran class) is the single project report: Abstract, Introduction,
-Literature Review, Proposed Solution (with diagrams), Implementation and Verification, Results (waveforms, performance, synthesis, portal screenshots),
-Individual Contributions, Conclusion and References. `make report` regenerates the waveform figures from real runs and rebuilds the PDF
-(needs `pdflatex`; install the class with `tlmgr --usermode install ieeetran`). Fill in the team names on the title page and in the
-Individual Contributions table of `report/main.tex`.
-
-## Layout
+rtl/        synthesizable design
+sim/        memory models, testbenches (tb_cache_controller, tb_perf, tb_integration, unit/), test_vectors/
+scripts/    compile.sh, run_tests.sh, regression.sh, run_wave.sh, run_synthesis.sh, analyze_results.py, ...
+synth/      Yosys scripts (generic and iCE40, flat and hierarchical)
+results/    simulation_logs/ (LAT=4 log and regression summary tracked), performance/, synthesis/ (reports tracked), waveforms/ (generated)
+docs/       architecture.md, fsm_design.md, verification.md, synthesis.md, diagrams/
+report/     IEEE report (main.tex, PDF, figures)
+extras/     optional browser portal for viewing runs and waveforms (not needed for the core flow): extras/portal/README.md
 ```
-rtl/        synthesizable design (address_decoder, cache_data/tag/valid_ram, main_memory_interface, cache_controller)
-sim/        simulation only: main_memory_model, reference_memory, tb_cache_controller, tb_perf, tb_integration, unit/, test_vectors/
-extras/portal/  server.py (local backend), vcd_index.py (VCD reader + access trace), static/ (four-page browser UI)
-scripts/    run_simulation.sh, run_synthesis.sh, analyze_results.py, plot_waveform.py, verify_portal.py
-results/    simulation_logs/, waveforms/, performance/, synthesis/   (generated)
-docs/       architecture.md, fsm_design.md, portal.md, diagrams/   (design notes)
-report/     the IEEE report: main.tex and Direct_Mapped_Cache_Controller_IEEE_Report.pdf
-```
+Generated VCDs, synthesis logs/JSON and most simulation logs are not tracked; `make regression`, `make wave` and `make synth` recreate them.
 
-## Key results (all measured; see the docs for details)
-- 11 directed/random tests pass at every latency tested; bug-injection check: 12 of 13 injected RTL bugs caught, the 13th is behaviorally equivalent (IEEE report, Section IV).
-- Hit time 2 cycles; miss penalty LAT + 5 cycles. At LAT = 4: sequential 75% hit, repeated 99.8%, random 1.4%, conflict 0% (IEEE report, Section V).
-- FPGA-style synthesis estimate: 635 LUT4, 487 flip-flops, 18 block RAMs (IEEE report, Section V). No timing analysis.
+## Limitations and future work
+Read-only (write-through/write-allocate planned); one outstanding request; word accesses only; synthetic traces; the memory model never reports errors;
+statistics counters take about half the flip-flops; no timing analysis. Possible extensions: write policy, size/block-size sweeps, a 2-way comparison,
+optional counters, place-and-route timing.
 
-## Demonstration procedure (about 5 minutes)
-1. `make smoke` — shows the toolchain works.
-2. `make sim` — watch 5 latency runs print `SUMMARY: PASS (11/11 tests)`. Open `results/simulation_logs/tb_cache_lat4.log` to show each test's *expected* vs *actual* lines.
-3. Show the diagrams in `docs/diagrams/` (block diagram, FSM, waveform of a miss followed by hits). Point out: LOOKUP → MISS_REQ → WAIT_MEM (LAT cycles) → REFILL → COMPLETE, then the next accesses finish in 2 cycles.
-4. `make perf` — show the table and `results/performance/hit_miss_rate.png`; explain sequential = 25% misses (one per 4-word block) and conflict = 100% misses (addresses 0 and 1024 share a line).
-5. Optional live bug: change `wire hit = rd_valid && (rd_tag == q_tag);` in `rtl/cache_controller.v` to drop `rd_valid &&`, run `make sim`, show FAIL and a nonzero exit, then revert.
-6. `make portal` — run *T4 Direct-mapped conflict*, click along the waveform, and watch the FSM state and cache line 0 change as 0x0 and 0x400 evict each other; click *Download VCD*.
-7. `make synth` — show `results/synthesis/ice40_stat.txt` (18 RAM blocks) and explain the estimate-vs-hardware distinction.
-
-## Known limitations
-Read-only; blocking (one request at a time); 32-bit word accesses only; memory model is always ready (back-pressure untested);
-synthetic traces; synthesis numbers are estimates and there is no timing analysis; statistics counters are always
-present (about half the flip-flops). Possible extensions: write-through/write-allocate, parameter sweeps of size and block
-size, 2-way set-associative comparison, optional statistics counters, timing with place-and-route.
+## Team contributions
+See the Individual Contributions table in `report/main.tex` (team names still to be filled in by the team).

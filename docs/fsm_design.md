@@ -25,6 +25,9 @@ Cycle count: hit = IDLE(accept) → LOOKUP → COMPLETE = 2; miss = LOOKUP, MISS
 memory interface's request cycle and response capture), REFILL, COMPLETE = LAT + 7. These were measured, not derived from the
 diagram: hit 2 and miss LAT+7 hold for every request in every run at LAT = 1, 2, 4, 8, 16.
 
+With memory back-pressure (`ACCEPT_DELAY` extra cycles of `mem_req_ready` low, simulation option) a miss takes LAT + 7 + ACCEPT_DELAY cycles;
+the request is held in `main_memory_interface` (M_REQ) until accepted, and a protocol checker verifies exactly one request per miss.
+
 Waveform of a cold miss followed by two hits (LAT = 4, from simulation):
 
 ![waveform](diagrams/waveform_miss_then_hits.png)

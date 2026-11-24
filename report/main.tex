@@ -267,7 +267,7 @@ The portal is a local web application with two parts (Fig.~\ref{fig:parch}). The
 \begin{figure*}[t]
 \centering
 \begin{tikzpicture}[x=1cm,y=1cm]
-  \node[blk] (ui) at (0,0) {Browser pages:\\Simulation, Cache Viewer,\\Waveform, Access Trace, Learn};
+  \node[blk] (ui) at (0,0) {Browser pages:\\Simulation, Cache Viewer,\\Waveform, Access Trace};
   \node[blk,fill=orange!15] (val) at (4.6,0) {Check inputs\\(scenario, latency\\from fixed lists)};
   \node[blk] (run) at (8.6,0) {\code{iverilog} and \code{vvp}\\fixed commands};
   \node[blk] (vcd) at (12.6,0) {run folder:\\\code{wave.vcd}, log,\\metadata};
@@ -285,13 +285,12 @@ The portal is a local web application with two parts (Fig.~\ref{fig:parch}). The
 \caption{Portal architecture. All displayed data comes from the VCD of the selected run or from the RTL source; the browser never sends a command or a file name.}\label{fig:parch}
 \end{figure*}
 
-The five pages share one selected run, so a student never compares data from different simulations:
+The four pages share one selected run, so a student never compares data from different simulations:
 \begin{itemize}
 \item \textbf{Simulation:} choose a scenario and memory delay, run it, and see the results cards (accesses, hits, misses, hit rate, AMAT), an address decoder, the FSM path, a cache snapshot, a small waveform and a trace excerpt.
 \item \textbf{Cache Viewer:} the 64 lines with valid bit, tag and data bytes, with search and filters.
-\item \textbf{Waveform:} 30 signals with zoom, pan, a movable cursor, hex/binary/decimal/raw-bit display, and download of the original VCD.
+\item \textbf{Waveform:} three modes. \emph{Single Access} (the default) zooms to one access using its real accept and response times and lists its FSM transitions and memory operations; \emph{Overview} shows the whole timeline with key signals; \emph{Full Waveform} offers every recorded signal. Zoom, pan, a movable cursor, hex/binary/decimal/raw-bit display, and download of the original VCD.
 \item \textbf{Access Trace:} every access with cycle, address, tag, index, offset, hit or miss and FSM transition, with filters, export and a hit/miss sequence.
-\item \textbf{Learn:} short explanations that use the real configuration and the numbers of the selected run.
 \end{itemize}
 The access trace is rebuilt from the VCD: an access is accepted at a clock edge where \code{req_valid} and \code{req_ready} were both 1, and its answer is the next edge where \code{resp_valid} was 1. A VCD cannot store RAM contents, so cache lines are rebuilt from the dumped refill and reset signals and checked against the memory image. Section~\ref{sec:res} shows screenshots.
 
@@ -318,7 +317,7 @@ The access trace is rebuilt from the VCD: an access is accepted at a clock edge 
 \end{tikzpicture}
 \caption{Overall tool flow of the project.}\label{fig:flow2}
 \end{figure*}
-Fig.~\ref{fig:flow2} shows how the parts connect. Each step has one command: \code{make sim}, \code{make perf}, \code{make synth}, \code{make portal} and \code{make verify-portal}.
+Fig.~\ref{fig:flow2} shows how the parts connect. Each step has one command: \code{make compile}, \code{make test}, \code{make regression}, \code{make wave}, \code{make perf}, \code{make synth}, and the optional \code{make portal} and \code{make verify-portal}.
 
 %=====================================================================
 \section{Implementation and Verification}\label{sec:impl}
@@ -349,7 +348,7 @@ Two design choices matter. Valid bits are flip-flops because a RAM cannot be cle
 Two independent checks run on every simulation. A \emph{monitor} watches the processor interface: at each accepted request it computes the right data from the reference memory and the right hit or miss from a separate cache model inside the testbench, and then checks the response. It also checks the rules: one response per request, no early response on a miss, and no request accepted while busy. \emph{Directed checks} add explicit expectations for hit/miss pattern, latency, memory reads and the stored valid/tag/data. After each test the hardware counters must equal the testbench counts. Each test starts with a reset, and the random test uses a fixed seed.
 
 \begin{table}[t]
-\caption{The eleven tests}\label{tab:tests}
+\caption{The twelve tests}\label{tab:tests}
 \centering\small
 \begin{tabular}{@{}r p{0.62\columnwidth}@{}}
 \toprule
@@ -366,11 +365,12 @@ Two independent checks run on every simulation. A \emph{monitor} watches the pro
 9 & held requests accepted once, in order\\
 10 & 5000 seeded random reads\\
 11 & first/last word; misaligned, out-of-range, write give an error\\
+12 & addresses 100, 1124, 100, 104: miss, miss, miss, hit (same line, tags 0 and 1; 100 and 104 share a block)\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-All eleven tests pass at $L=1,2,4,8,16$. Two unit tests also pass (address decoder against bit slicing for 20{,}000 random addresses, and the storage arrays).
+All twelve tests pass at $L=1,2,4,8,16$, with the memory holding \texttt{mem\_req\_ready} low for 1 or 3 extra cycles (back-pressure), and with three further random seeds (\code{make regression}: 14 of 14 runs). A memory-side protocol checker also runs in every simulation: the request stays valid with a stable, block-aligned address until accepted; no request is accepted while a read is outstanding; a response only follows a request and lasts one cycle. Two unit tests also pass (address decoder against bit slicing for 20{,}000 random addresses, and the storage arrays).
 
 \subsection{Does the testbench catch bugs?}
 A testbench that never fails proves little, so thirteen bugs were injected one at a time into copies of the RTL: ignoring the valid bit, comparing only part of the tag, a wrong word select, refilling the wrong line (three variants), not clearing valid bits on reset, returning stale data on a miss, a wrong hit counter, not waiting for memory, never writing the tag RAM, an unaligned block address, and ignoring tag bit 21. The testbench failed for twelve of them. The surviving one cannot matter: memory is 64~KB, so address bit 31 is never 1. An early testbench missed the wrong-line refills because the driver kept the address steady after acceptance; it now changes the address after acceptance. This follows the idea of mutation testing~\cite{demillo1978}.
@@ -483,13 +483,12 @@ Flip-flops, no RAM blocks & 10{,}237\\
 All 17 storage arrays map to block RAM. Without block RAM the arrays become about 9{,}600 flip-flops, which shows why this matters. Block RAM is under-used (73{,}728 bits of RAM for about 9{,}600 stored bits) because each byte lane takes a whole block. The seven statistics counters use about half of the flip-flops, so a final design should make them optional. No timing analysis was done.
 
 \subsection{Portal screenshots}
-Figs.~\ref{fig:ui-sim}--\ref{fig:ui-learn} show the five portal pages from a real run (the full test suite, memory delay 4). The numbers on them are the measured values of that run.
+Figs.~\ref{fig:ui-sim}--\ref{fig:ui-trace} show the four portal pages from a real run (the full test suite, memory delay 4). The numbers on them are the measured values of that run.
 
 \begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth,trim=0 175 0 0,clip]{ui_simulation.png}\caption{Simulation page: controls, results cards, address decoder, FSM with the recorded path (numbers show the order), cache snapshot, mini waveform and trace excerpt.}\label{fig:ui-sim}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_cache.png}\caption{Cache Viewer: 64 lines with valid bit, tag and data bytes; the selected line was just refilled by access \#5.}\label{fig:ui-cache}\end{figure*}
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_waveform.png}\caption{Waveform page: signals with their value at the cursor, cursor panel and the FSM path of the selected access.}\label{fig:ui-wave}\end{figure*}
+\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_waveform.png}\caption{Waveform page (Single Access mode, the default): key signals with their value at the cursor, the selected access, and its FSM path and events.}\label{fig:ui-wave}\end{figure*}
 \begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_trace.png}\caption{Access Trace page: every access with its result and FSM transition, summary, details and hit/miss sequence.}\label{fig:ui-trace}\end{figure*}
-\begin{figure*}[t]\centering\includegraphics[width=0.84\textwidth]{ui_learn.png}\caption{Learn page: architecture, address split, FSM, line format and AMAT with measured numbers.}\label{fig:ui-learn}\end{figure*}
 
 \subsection{Are the portal data real?}
 A verification script runs seven real simulations through the same code as the portal and checks that: the VCD was written by Icarus Verilog and matches its SHA-256 value; the indexed signal values equal an independent re-parse of the VCD; the access trace equals a second, independent derivation (time, address and hit/miss/error of every access); the trace totals equal the counters printed by the simulator; hit, miss and error latencies match the design timing; reconstructed cache lines match memory; and exports, asynchronous runs and deletion work. Bad scenarios, delays, malformed or oversized requests, path tricks and unknown run identifiers are rejected. All checks pass.
@@ -506,10 +505,10 @@ Table~\ref{tab:contrib} lists the work packages and who did them. Replace the br
 Member & Work done\\
 \midrule
 {[Member 1]} & Architecture and parameters; address decoder; tag, valid and data storage; cache controller FSM and hit logic\\
-{[Member 2]} & Memory interface and memory model; reference model; self-checking testbench with eleven tests; bug-injection check\\
+{[Member 2]} & Memory interface and memory model; reference model; self-checking testbench with twelve tests; bug-injection check\\
 {[Member 3]} & Workloads and Python analysis; AMAT study; Yosys synthesis and resource estimate\\
 {[Member 4]} & Portal backend (safe runs, VCD index, access trace) and portal verification script\\
-{[Member 5]} & Portal user interface (five pages, SVG icons), diagrams, screenshots and this report\\
+{[Member 5]} & Portal user interface (four pages, SVG icons), diagrams, screenshots and this report\\
 \bottomrule
 \end{tabular}
 \end{table}

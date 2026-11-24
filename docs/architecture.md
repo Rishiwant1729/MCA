@@ -2,6 +2,17 @@
 
 ![block diagram](diagrams/block_diagram.png)
 
+## Concepts
+- **Memory hierarchy.** The processor is much faster than main memory, so a small fast cache sits between them. It is useful because of
+  temporal locality (recently used data is used again) and spatial locality (neighbours are used soon, so a miss fetches a whole 16-byte block).
+- **Direct mapping.** A block can live in exactly one line, chosen by the index bits. A line stores a valid bit, a 22-bit tag and the 128-bit block.
+  Hit = `valid && stored_tag == request_tag`; a valid line with a different tag is a miss.
+- **Conflict miss.** Two blocks with the same index but different tags evict each other. Example: address 100 (block 6, index 6, tag 0) and
+  address 1124 (block 70, index 6, tag 1) share line 6, so 100, 1124, 100 gives MISS, MISS, MISS; then 104 is in the same block as 100 and hits.
+  Test T12 checks exactly this.
+- **Refill.** On a miss the controller requests the whole block from memory, waits, then writes data, tag and valid bit of the indexed line
+  in one cycle (REFILL) before answering the processor.
+
 ## Parameters (derived in one place)
 | Parameter | Value | Derivation |
 |---|---|---|
