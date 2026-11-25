@@ -85,6 +85,7 @@ python3 -m venv .venv && .venv/bin/pip install matplotlib pymupdf   # optional: 
 ```
 
 ```bash
+make sim                      # simplest: run ALL tests and write a waveform (VCD) for every test
 make compile                  # iverilog -Wall on RTL and testbenches, Yosys elaboration check
 make test                     # all unit tests + the 12-test system testbench (LAT=4)
 make regression               # 16 runs: latency 1/2/4/8/16, memory back-pressure, extra seeds

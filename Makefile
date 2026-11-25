@@ -2,9 +2,13 @@
 TEST ?=
 LAT  ?= 4
 PY   ?= .venv/bin/python
-.PHONY: help all compile test regression wave synth perf diagrams waveforms report clean
+.PHONY: help all sim waves-all compile test regression wave synth perf diagrams waveforms report clean
 
 help:
+	@echo "Simple commands:"
+	@echo "  make sim                  run ALL tests and write a waveform (VCD) for every test"
+	@echo "  make test                 run all tests only (quick)"
+	@echo "  make wave TEST=conflict   waveform for one test (make wave lists the names)"
 	@echo "Core flow (Icarus Verilog + Yosys):"
 	@echo "  make compile              compile RTL and testbenches, Yosys elaboration check"
 	@echo "  make test [LAT=4]         unit tests + 12-test system testbench at one memory latency"
@@ -20,6 +24,11 @@ help:
 	@echo "  make all                  compile, regression, perf, synth, diagrams, waveforms, report"
 
 all: compile regression perf synth diagrams waveforms report
+
+sim: test waves-all
+	@echo ""; echo "ALL TESTS PASSED. Waveforms are in simulation/waveforms/ (open one with: gtkwave simulation/waveforms/<file>.vcd)"
+waves-all:
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12; do scripts/run_wave.sh $$i $(LAT) | grep -E "^waveform|FAILED" || exit 1; done
 
 compile:
 	scripts/compile.sh
