@@ -180,14 +180,15 @@ Generated VCD files, most logs and Yosys logs are not tracked; `make regression`
 
 ## Team
 
-The team names and roles below are placeholders; fill them in (the same table is in the report).
-
 | Member | Role | Responsibilities |
 |---|---|---|
-| [Member 1] | Architecture and Integration | Architecture and signal definitions, cache controller FSM, integration, system testbench |
-| [Member 2] | Cache Storage and Hit Logic | Address decoder, tag/valid/data storage, tag comparator, hit/miss unit, unit tests |
-| [Member 3] | Verification and Simulation | Memory interface and model, reference model, regression, bug injection, waveforms |
-| [Member 4] | Analysis and Documentation | Workloads and AMAT analysis, Yosys synthesis, diagrams, literature review, README, IEEE report |
+| Rishiwant Kumar Maurya (lead) | Architecture and Integration | Architecture and signal definitions, `cache_controller` FSM, integration of all modules, Makefile and scripts, README, project guide |
+| Aditya Shankar | Cache Storage and Address Decoding | `address_decoder`, `cache_valid_ram`, `cache_tag_ram`, `cache_data_ram`, their unit tests, prototype demo video |
+| Animesh Kumar Rai | Hit Logic and Memory Interface | `tag_comparator`, `hit_miss_unit`, `main_memory_interface`, `main_memory_model`, their unit tests |
+| Drishti Jha | Verification and Simulation | System testbench (12 tests), monitor and protocol checker, `reference_memory`, regression, bug injection, waveforms |
+| Supreet | Performance, Synthesis and Report | Workloads and AMAT analysis, Yosys synthesis, diagrams, literature review, IEEE report |
+
+Who owns which files, and the Git workflow: [`docs/team_workflow.md`](docs/team_workflow.md).
 
 ## References
 

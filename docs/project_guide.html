@@ -292,7 +292,7 @@ $enddefinitions $end
 │   └── waveforms/              <span class="n">generated *.vcd files (open with GTKWave)</span>
 ├── <span class="d">diagrams/</span>                <span class="n">block_diagram and controller_fsm: .tex source, .svg, .png</span>
 ├── <span class="d">docs/</span>                    <span class="n">architecture.md, fsm_design.md, verification.md, synthesis.md,
-│                           perf_results.md, performance.csv, literature_review.md, images/, this guide</span>
+│                           perf_results.md, performance.csv, literature_review.md, team_workflow.md, images/, this guide</span>
 ├── <span class="d">report/</span>                  <span class="n">main.tex, IEEE_Report_Final.pdf, figures/</span>
 ├── Makefile                    <span class="n">one command per step (make help)</span>
 └── README.md                   <span class="n">overview, results tables, how to run</span></div>
@@ -815,7 +815,7 @@ Time axis = nanoseconds since the start of the window; one clock period = 10&nbs
 <figure><img src="images/amat_vs_latency.png" alt="AMAT versus latency"></figure>
 <p><b>AMAT versus memory latency.</b> Each line is a workload. The <b>slope of a line equals its miss rate</b>: AMAT = 2 + m·(L + 5), so each extra cycle of L adds m cycles. <code>conflict</code> (m = 1) is steepest; <code>repeated</code> (m = 0.2%) is almost flat. The formula and the directly measured average latency agree for every point.</p>
 <p><b>Tables in the report:</b> Table I configuration; FSM-states table; module table; unit-test table; the twelve tests; workloads; results at L = 4; AMAT for L = 1/4/8/16; Yosys estimate; individual contributions.</p>
-<div class="box warn"><b class="t">Before you submit</b>The Individual Contributions table in <code>report/main.tex</code> and the team table in <code>README.md</code> still use <code>[Member 1..4]</code> placeholders. Fill them in and run <code>make report</code>. Also check the reference details against the originals.</div>
+<div class="box warn"><b class="t">Before you submit</b>The team table in <code>README.md</code>, <code>docs/team_workflow.md</code> and the Individual Contributions table in <code>report/main.tex</code> use the same split of work. If who did what differs from that plan, change all three, then run <code>make report</code>. Also check the reference details against the originals.</div>
 
 <!-- ================================================================== 8 -->
 <h2 class="sec" id="numbers">8. Numbers cheat sheet (all measured)</h2>

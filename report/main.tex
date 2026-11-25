@@ -33,9 +33,9 @@
 
 \title{Design, Verification and Performance Analysis of a\\Direct-Mapped Cache Controller in Verilog}
 
-\author{\IEEEauthorblockN{[Team member names]}
+\author{\IEEEauthorblockN{Aditya Shankar, Animesh Kumar Rai, Drishti Jha,\\ Rishiwant Kumar Maurya, and Supreet}
 \IEEEauthorblockA{Modern Computer Architecture (MCA) Capstone Project\\
-{[Department / Institution]}\\
+Newton School of Technology, Rishihood University\\
 Software-only project: Verilog, Icarus Verilog, Yosys, Python}}
 
 \maketitle
@@ -428,19 +428,20 @@ All 17 storage arrays map to block RAM. Without block RAM the arrays become abou
 
 %=====================================================================
 \section{Individual Contributions}\label{sec:contrib}
-Table~\ref{tab:contrib} lists the work packages and who did them. The bracketed names are placeholders for the team members' names.
+Table~\ref{tab:contrib} lists the work packages of the five team members and the modules and files each member owns.
 
 \begin{table}[t]
 \caption{Individual contributions}\label{tab:contrib}
 \centering\small
-\begin{tabular}{@{}p{0.27\columnwidth}p{0.62\columnwidth}@{}}
+\begin{tabular}{@{}p{0.26\columnwidth}p{0.64\columnwidth}@{}}
 \toprule
 Member & Responsibilities\\
 \midrule
-{[Member 1]} & Architecture and signal definitions; cache controller FSM; integration of all modules; system testbench\\
-{[Member 2]} & Address decoder; tag, valid and data storage; tag comparator and hit/miss unit; their unit tests\\
-{[Member 3]} & Memory interface and memory model; reference model; verification, regression, bug-injection check, waveforms\\
-{[Member 4]} & Workloads and AMAT analysis; Yosys synthesis; diagrams, literature review, README and this report\\
+Rishiwant Kumar Maurya (lead) & Architecture and signal definitions; cache controller FSM; integration of all modules; Makefile and scripts; README and project guide\\
+Aditya Shankar & Address decoder; valid, tag and data storage; their unit tests; prototype demo video\\
+Animesh Kumar Rai & Tag comparator and hit/miss unit; memory interface and memory model; their unit tests\\
+Drishti Jha & Twelve-test system testbench with monitor and protocol checker; reference model; regression; bug-injection check; waveforms\\
+Supreet & Workloads and AMAT study; Yosys synthesis; diagrams; literature review; IEEE report\\
 \bottomrule
 \end{tabular}
 \end{table}
